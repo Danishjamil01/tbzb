@@ -26,6 +26,14 @@
         </div>
 
         @if (adminService.isAuthenticated()) {
+          <button
+            class="btn-header-settings"
+            (click)="activeTab.set(activeTab() === 'security' ? 'dishes' : 'security')"
+            [class.active]="activeTab() === 'security'"
+            title="Settings & PIN"
+          >
+            <app-icon name="settings" [size]="16" />
+          </button>
           <button class="btn-logout" (click)="onLogout()" title="Logout Admin">
             <app-icon name="unlock" [size]="16" />
             <span class="btn-text-desktop">Logout</span>
@@ -629,7 +637,7 @@
             [class.active]="activeTab() === 'dishes'"
             (click)="activeTab.set('dishes')"
           >
-            <app-icon name="utensils" [size]="20" />
+            <app-icon name="utensils" [size]="22" />
             <span>Dishes</span>
           </button>
           <button
@@ -637,24 +645,8 @@
             [class.active]="activeTab() === 'kitchen'"
             (click)="activeTab.set('kitchen')"
           >
-            <app-icon name="chef-hat" [size]="20" />
+            <app-icon name="chef-hat" [size]="22" />
             <span>Kitchen</span>
-          </button>
-          <button
-            class="nav-tab-item"
-            [class.active]="activeTab() === 'cloud'"
-            (click)="activeTab.set('cloud')"
-          >
-            <app-icon name="database" [size]="20" />
-            <span>Cloud</span>
-          </button>
-          <button
-            class="nav-tab-item"
-            [class.active]="activeTab() === 'security'"
-            (click)="activeTab.set('security')"
-          >
-            <app-icon name="settings" [size]="20" />
-            <span>Settings</span>
           </button>
         </nav>
       }

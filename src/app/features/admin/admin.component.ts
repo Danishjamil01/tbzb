@@ -198,8 +198,8 @@ export class AdminComponent {
     const msg = mode === 'open'
       ? 'Kitchen manually forced OPEN! Orders accepted anytime.'
       : mode === 'closed'
-      ? 'Kitchen manually PAUSED! Customers cannot order right now.'
-      : 'Kitchen returned to automatic schedule (10:00 AM – 1:00 AM).';
+        ? 'Kitchen manually PAUSED! Customers cannot order right now.'
+        : 'Kitchen returned to automatic schedule (10:00 AM – 1:00 AM).';
     this.toastService.show(msg, mode === 'closed' ? 'warning' : 'success');
     if (this.adminService.cloudConfig()?.autoSync) {
       this.adminService.syncToCloud();
