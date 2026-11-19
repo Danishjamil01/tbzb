@@ -1,14 +1,20 @@
 @if (adminService.isAdminOpen()) {
-  <div class="admin-backdrop" (click)="onClose()"></div>
-
-  <div class="admin-panel-container" role="dialog" aria-modal="true" aria-label="TBZB Kitchen Admin Panel">
+  <!-- FULL-PAGE STANDALONE ADMIN PORTAL -->
+  <div class="admin-page-portal" role="main" aria-label="TBZB Kitchen Admin Portal">
     <!-- Top Header Bar -->
     <header class="admin-header">
-      <div class="admin-brand">
-        <div class="brand-badge">TBZB</div>
-        <div class="brand-meta">
-          <h2 class="admin-title">Kitchen Admin Panel</h2>
-          <span class="admin-sub">The Bite Zone • Bidar Cloud Kitchen</span>
+      <div class="header-left">
+        <button class="btn-back-store" (click)="onClose()" title="Return to Customer Store">
+          <app-icon name="arrow-left" [size]="18" />
+          <span class="btn-back-text">Back to Store</span>
+        </button>
+
+        <div class="admin-brand">
+          <div class="brand-badge">TBZB</div>
+          <div class="brand-meta">
+            <h1 class="admin-title">Kitchen Portal</h1>
+            <span class="admin-sub">The Bite Zone • Bidar</span>
+          </div>
         </div>
       </div>
 
@@ -25,10 +31,6 @@
             <span class="btn-text-desktop">Logout</span>
           </button>
         }
-
-        <button class="btn-close" (click)="onClose()" aria-label="Close admin panel">
-          <app-icon name="x" [size]="22" />
-        </button>
       </div>
     </header>
 
@@ -42,9 +44,9 @@
               <app-icon name="lock" [size]="32" />
             </div>
 
-            <h3 class="login-heading">Owner & Kitchen Login</h3>
+            <h2 class="login-heading">Owner & Kitchen Login</h2>
             <p class="login-subtext">
-              Enter your secret admin PIN or password to manage menu dishes, prices, and kitchen operations.
+              Enter your secure admin PIN to manage menu dishes, prices, and kitchen operations.
             </p>
 
             <form class="login-form" (ngSubmit)="onLogin()">
@@ -87,7 +89,7 @@
                 </label>
                 <span class="secure-badge-hint">
                   <app-icon name="shield-check" [size]="13" />
-                  <span>Authorized Access Only</span>
+                  <span>SHA-256 Encrypted</span>
                 </span>
               </div>
 
@@ -111,9 +113,9 @@
             <span class="stat-num">{{ inStockCount() }}</span>
             <span class="stat-label">In Stock (Available)</span>
           </div>
-          <div class="stat-card sold-out">
+          <div class="stat-card not-in-stock">
             <span class="stat-num">{{ soldOutCount() }}</span>
-            <span class="stat-label">Sold Out (Disabled)</span>
+            <span class="stat-label">Not in Stock</span>
           </div>
           <div class="stat-card cloud">
             <span class="stat-mode">
@@ -125,8 +127,8 @@
           </div>
         </div>
 
-        <!-- Navigation Tabs -->
-        <nav class="admin-tabs">
+        <!-- Desktop Navigation Tabs (Hidden on Mobile) -->
+        <nav class="admin-desktop-tabs">
           <button
             class="tab-btn"
             [class.active]="activeTab() === 'dishes'"
@@ -196,7 +198,7 @@
                 <select class="admin-select" [(ngModel)]="availabilityFilter">
                   <option value="all">All Stock Status</option>
                   <option value="in-stock">In Stock Only</option>
-                  <option value="sold-out">Sold Out Only</option>
+                  <option value="sold-out">Not in Stock Only</option>
                 </select>
               </div>
 
@@ -208,7 +210,7 @@
               </div>
             </div>
 
-            <!-- Dishes Table / List -->
+            <!-- Dishes Wrapper -->
             <div class="dishes-list-wrap">
               @if (filteredDishes().length === 0) {
                 <div class="no-dishes-state">
@@ -216,7 +218,8 @@
                   <p>No dishes match the current filter or search query.</p>
                 </div>
               } @else {
-                <div class="dishes-table">
+                <!-- DESKTOP TABLE VIEW (>= 768px) -->
+                <div class="dishes-table desktop-only">
                   <div class="table-header">
                     <span class="th-dish">Dish Details</span>
                     <span class="th-cat">Category</span>
@@ -272,11 +275,11 @@
                             class="stock-toggle-btn"
                             [ngClass]="dish.isAvailable ? 'available' : 'unavailable'"
                             (click)="toggleDishStock(dish)"
-                            [title]="dish.isAvailable ? 'Click to mark Sold Out' : 'Click to mark In Stock'"
+                            [title]="dish.isAvailable ? 'Click to mark Not in Stock' : 'Click to mark In Stock'"
                           >
                             <span class="toggle-dot"></span>
                             <span class="toggle-text">
-                              {{ dish.isAvailable ? 'In Stock' : 'Sold Out' }}
+                              {{ dish.isAvailable ? 'In Stock' : 'Not in Stock' }}
                             </span>
                           </button>
                         </div>
@@ -302,6 +305,66 @@
                       </div>
                     }
                   </div>
+                </div>
+
+                <!-- MOBILE CARDS VIEW (< 768px) -->
+                <div class="mobile-dishes-grid mobile-only">
+                  @for (dish of filteredDishes(); track dish.id) {
+                    <div class="mobile-dish-card" [class.is-out-of-stock]="!dish.isAvailable">
+                      <div class="mobile-card-top">
+                        <div class="mobile-thumb-container">
+                          <img [src]="dish.imageUrl" [alt]="dish.name" class="mobile-thumb" loading="lazy" />
+                          <span class="diet-dot" [ngClass]="dish.dietType === 'veg' ? 'veg' : 'non-veg'"></span>
+                        </div>
+
+                        <div class="mobile-details">
+                          <div class="mobile-name-row">
+                            <h3 class="mobile-title">{{ dish.name }}</h3>
+                            @if (dish.featured) {
+                              <span class="badge-featured">Popular</span>
+                            }
+                          </div>
+                          <span class="mobile-cat-pill">{{ dish.category }}</span>
+
+                          <div class="mobile-price-row">
+                            <span class="rupee-sym">₹</span>
+                            <input
+                              type="number"
+                              [value]="dish.price"
+                              #mobPriceInput
+                              (change)="updateDishPriceInline(dish, mobPriceInput.value)"
+                              class="mob-price-edit"
+                              title="Tap to change price"
+                            />
+                            <span class="edit-hint">(Tap to change)</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="mobile-card-bottom">
+                        <!-- 1-Tap Stock Switch -->
+                        <button
+                          class="mobile-stock-btn"
+                          [ngClass]="dish.isAvailable ? 'available' : 'unavailable'"
+                          (click)="toggleDishStock(dish)"
+                        >
+                          <span class="stock-dot"></span>
+                          <span class="stock-text">
+                            {{ dish.isAvailable ? 'In Stock (Available)' : 'Not in Stock (Disabled)' }}
+                          </span>
+                        </button>
+
+                        <div class="mobile-card-actions">
+                          <button class="mob-action-btn edit" (click)="openEditDishModal(dish)" title="Edit">
+                            <app-icon name="edit" [size]="16" />
+                          </button>
+                          <button class="mob-action-btn delete" (click)="deleteDish(dish)" title="Delete">
+                            <app-icon name="trash-2" [size]="16" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  }
                 </div>
               }
             </div>
@@ -394,7 +457,7 @@
               </div>
               <p class="card-desc">
                 Google Firebase gives you <strong>50,000 free reads/day</strong>.
-                Connecting Firebase ensures that whenever you edit a dish price or mark an item "Sold Out" from your phone,
+                Connecting Firebase ensures that whenever you edit a dish price or mark an item "Not in Stock" from your phone,
                 <strong>every customer visiting your website sees the update in real-time</strong>!
               </p>
 
@@ -404,7 +467,7 @@
                 <ol class="guide-steps">
                   <li>Go to <a href="https://console.firebase.google.com" target="_blank" rel="noopener">console.firebase.google.com</a> (sign in with your Google account).</li>
                   <li>Click <strong>Create a project</strong> and name it <code>tbzb-bidar</code>.</li>
-                  <li>In the sidebar, click <strong>Build &gt; Firestore Database</strong> &gt; <strong>Create Database</strong> (select "Start in test mode").</li>
+                  <li>In the sidebar, click <strong>Build &gt; Firestore Database</strong> &gt; <strong>Create Database</strong>.</li>
                   <li>Copy your <strong>Project ID</strong> (from Project Settings) and paste it below.</li>
                 </ol>
               </div>
@@ -510,17 +573,17 @@
                 <h3>Change Admin PIN</h3>
               </div>
               <p class="card-desc">
-                Keep your kitchen dashboard secure. Choose a minimum 4-digit PIN for quick mobile login.
+                Keep your kitchen dashboard secure. Enter a minimum 6-digit PIN. Your PIN is cryptographically salted and hashed with SHA-256 (cannot be extracted from browser inspect element).
               </p>
 
               <div class="pin-change-form">
                 <div class="form-row">
                   <div class="form-col">
-                    <label for="newPin">New PIN (4+ digits)</label>
+                    <label for="newPin">New PIN (6+ digits)</label>
                     <input
                       id="newPin"
                       type="password"
-                      placeholder="e.g. 5678"
+                      placeholder="e.g. 786925"
                       [(ngModel)]="newPinInput"
                     />
                   </div>
@@ -537,7 +600,7 @@
 
                 <button class="btn-update-pin" (click)="onChangePin()">
                   <app-icon name="check" [size]="16" />
-                  <span>Update Admin PIN</span>
+                  <span>Update & Hash PIN</span>
                 </button>
               </div>
             </div>
@@ -558,6 +621,42 @@
             </div>
           </div>
         }
+
+        <!-- Mobile Bottom Navigation Bar (Fixed at bottom on phones < 768px) -->
+        <nav class="mobile-bottom-nav mobile-only">
+          <button
+            class="nav-tab-item"
+            [class.active]="activeTab() === 'dishes'"
+            (click)="activeTab.set('dishes')"
+          >
+            <app-icon name="utensils" [size]="20" />
+            <span>Dishes</span>
+          </button>
+          <button
+            class="nav-tab-item"
+            [class.active]="activeTab() === 'kitchen'"
+            (click)="activeTab.set('kitchen')"
+          >
+            <app-icon name="chef-hat" [size]="20" />
+            <span>Kitchen</span>
+          </button>
+          <button
+            class="nav-tab-item"
+            [class.active]="activeTab() === 'cloud'"
+            (click)="activeTab.set('cloud')"
+          >
+            <app-icon name="database" [size]="20" />
+            <span>Cloud</span>
+          </button>
+          <button
+            class="nav-tab-item"
+            [class.active]="activeTab() === 'security'"
+            (click)="activeTab.set('security')"
+          >
+            <app-icon name="settings" [size]="20" />
+            <span>Settings</span>
+          </button>
+        </nav>
       }
     </div>
   </div>
@@ -648,4 +747,3 @@
     </div>
   }
 }
-

@@ -91,12 +91,12 @@ export class AdminComponent {
   /* ==========================================================================
      AUTH ACTIONS
      ========================================================================== */
-  onLogin(): void {
+  async onLogin(): Promise<void> {
     if (!this.pinInput.trim()) {
       this.toastService.show('Please enter your admin PIN or password', 'warning');
       return;
     }
-    const success = this.adminService.login(this.pinInput, this.rememberMe);
+    const success = await this.adminService.login(this.pinInput, this.rememberMe);
     if (success) {
       this.pinInput = '';
     }
@@ -116,7 +116,7 @@ export class AdminComponent {
   toggleDishStock(dish: MenuItem): void {
     const newStatus = this.menuService.toggleAvailability(dish.id);
     this.toastService.show(
-      `"${dish.name}" is now ${newStatus ? 'In Stock (Available)' : 'Sold Out (Disabled)'}`,
+      `"${dish.name}" is now ${newStatus ? 'In Stock (Available)' : 'Not in Stock (Disabled)'}`,
       newStatus ? 'success' : 'warning'
     );
     if (this.adminService.cloudConfig()?.autoSync) {
@@ -258,16 +258,16 @@ export class AdminComponent {
   /* ==========================================================================
      SECURITY ACTIONS
      ========================================================================== */
-  onChangePin(): void {
-    if (!this.newPinInput || this.newPinInput.length < 4) {
-      this.toastService.show('New PIN must be at least 4 digits', 'warning');
+  async onChangePin(): Promise<void> {
+    if (!this.newPinInput || this.newPinInput.length < 6) {
+      this.toastService.show('New PIN must be at least 6 digits', 'warning');
       return;
     }
     if (this.newPinInput !== this.confirmPinInput) {
       this.toastService.show('PINs do not match', 'error');
       return;
     }
-    const ok = this.adminService.updatePin(this.newPinInput);
+    const ok = await this.adminService.updatePin(this.newPinInput);
     if (ok) {
       this.newPinInput = '';
       this.confirmPinInput = '';

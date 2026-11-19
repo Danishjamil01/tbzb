@@ -76,7 +76,12 @@ import { IconComponent } from '../../shared/components/icon/icon.component';
 
             <!-- Action Button / Cart Stepper -->
             <div class="spotlight-actions">
-              @if (quantity === 0) {
+              @if (!item.isAvailable) {
+                <div class="spotlight-not-in-stock-pill">
+                  <app-icon name="alert-circle" [size]="18" />
+                  <span>Not in Stock</span>
+                </div>
+              } @else if (quantity === 0) {
                 <button class="btn-order-kunafa" (click)="onAdd()" aria-label="Order Kunafa Jar">
                   <app-icon name="shopping-cart" [size]="18" />
                   <span>Order Kunafa Jar • {{ item.price | inr }}</span>
@@ -101,10 +106,14 @@ import { IconComponent } from '../../shared/components/icon/icon.component';
 
           <!-- Right Visual Column -->
           <div class="spotlight-visual">
+            @if (!item.isAvailable) {
+              <div class="kunafa-visual-badge">Not in Stock</div>
+            }
             <img
               src="images/food/kunafa-showcase1.png"
               alt="TBZB Signature Kunafa Jar"
               class="kunafa-showcase-img"
+              [class.not-in-stock-img]="!item.isAvailable"
               loading="lazy"
             />
           </div>
@@ -385,6 +394,40 @@ import { IconComponent } from '../../shared/components/icon/icon.component';
       justify-content: flex-end;
     }
 
+    .spotlight-not-in-stock-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background-color: #FEE2E2;
+      color: #DC2626;
+      border: 1.5px solid #FECACA;
+      border-radius: 9999px;
+      padding: 12px 24px;
+      font-family: var(--font-heading);
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      box-shadow: 0 4px 14px rgba(220, 38, 38, 0.15);
+    }
+
+    .kunafa-visual-badge {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: #DC2626;
+      color: #FFFFFF;
+      font-family: var(--font-heading);
+      font-size: 13px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      padding: 7px 16px;
+      border-radius: 8px;
+      box-shadow: 0 4px 14px rgba(220, 38, 38, 0.45);
+      z-index: 5;
+    }
+
     .kunafa-showcase-img {
       width: 100%;
       height: 100%;
@@ -392,6 +435,11 @@ import { IconComponent } from '../../shared/components/icon/icon.component';
       // object-fit: cover;
       object-position: right center;
       display: block;
+      transition: filter 0.3s ease;
+
+      &.not-in-stock-img {
+        filter: grayscale(60%) opacity(0.88);
+      }
     }
   `]
 })
@@ -409,6 +457,10 @@ export class KunafaSpotlightComponent {
   }
 
   onAdd(): void {
+    if (!this.item.isAvailable) {
+      this.toastService.show('Sorry, Kunafa Jar is currently not in stock.', 'warning');
+      return;
+    }
     this.cartService.addItem(this.item, 1);
     this.toastService.show(`Added ${this.item.name} to cart`, 'success');
   }

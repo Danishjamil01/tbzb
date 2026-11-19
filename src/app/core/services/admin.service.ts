@@ -32,9 +32,10 @@ export class AdminService {
   isAdminOpen = signal<boolean>(false);
   isAuthenticated = signal<boolean>(this.checkSavedSession());
 
-  // Security: Brute-force protection & Lockout
-  private readonly MASTER_PIN = '786925';
-  private readonly MASTER_KEY = 'TBZB@9164#Bidar';
+  // Security: Cryptographic SHA-256 Salted Hashes (Plaintext PIN is NEVER stored in code or bundle)
+  private readonly SALT = '_tbzb_bidar_secure_salt_2026';
+  private readonly HASHED_PIN = 'cce0504d956891dbe811663c9d59268d4c1c91bf40afc859f7489dea2dca04a0';
+  private readonly HASHED_MASTER = '05cf350d5acca820c59b08500d07a82f0781b9623a97f29859a2af11f2b1c5c1';
   failedAttempts = signal<number>(this.loadFailedAttempts());
   lockoutUntil = signal<number>(this.loadLockout());
 
@@ -124,7 +125,21 @@ export class AdminService {
     return 0;
   }
 
-  login(pinOrPassword: string, rememberMe = false): boolean {
+  private async hashInput(text: string): Promise<string> {
+    try {
+      if (typeof window !== 'undefined' && window.crypto?.subtle) {
+        const encoder = new TextEncoder();
+        const data = encoder.encode(text + this.SALT);
+        const hashBuf = await window.crypto.subtle.digest('SHA-256', data);
+        return Array.from(new Uint8Array(hashBuf))
+          .map(b => b.toString(16).padStart(2, '0'))
+          .join('');
+      }
+    } catch (e) {}
+    return text;
+  }
+
+  async login(pinOrPassword: string, rememberMe = false): Promise<boolean> {
     // Check if account is temporarily locked
     const now = Date.now();
     const lockedUntil = this.lockoutUntil();
@@ -135,10 +150,18 @@ export class AdminService {
     }
 
     const trimmed = (pinOrPassword || '').trim();
-    const savedPin = this.getSavedPin();
+    if (!trimmed) {
+      this.toastService.show('Please enter your admin PIN or password', 'warning');
+      return false;
+    }
 
-    // Valid if matches saved custom PIN, master 6-digit PIN, or master alphanumeric key
-    const isMatch = trimmed === savedPin || trimmed === this.MASTER_PIN || trimmed === this.MASTER_KEY;
+    const hashedInput = await this.hashInput(trimmed);
+    const savedCustomHash = this.getSavedPinHash();
+
+    // Valid if matches saved custom hash, master PIN hash, or master key hash
+    const isMatch = hashedInput === savedCustomHash ||
+                    hashedInput === this.HASHED_PIN ||
+                    hashedInput === this.HASHED_MASTER;
 
     if (isMatch) {
       // Reset lockout & failed attempts on success
@@ -198,26 +221,28 @@ export class AdminService {
     this.toastService.show('Admin logged out', 'info');
   }
 
-  getSavedPin(): string {
+  getSavedPinHash(): string {
     try {
       if (typeof window !== 'undefined' && window.localStorage) {
-        return localStorage.getItem('tbzb_admin_pin') || this.MASTER_PIN;
+        return localStorage.getItem('tbzb_admin_pin_hash') || this.HASHED_PIN;
       }
     } catch (e) {}
-    return this.MASTER_PIN;
+    return this.HASHED_PIN;
   }
 
-  updatePin(newPin: string): boolean {
+  async updatePin(newPin: string): Promise<boolean> {
     const trimmed = (newPin || '').trim();
     if (!trimmed || trimmed.length < 6) {
       this.toastService.show('New PIN must be at least 6 digits for security', 'warning');
       return false;
     }
     try {
+      const hashed = await this.hashInput(trimmed);
       if (typeof window !== 'undefined' && window.localStorage) {
-        localStorage.setItem('tbzb_admin_pin', trimmed);
+        localStorage.setItem('tbzb_admin_pin_hash', hashed);
+        localStorage.removeItem('tbzb_admin_pin');
       }
-      this.toastService.show('Admin PIN updated successfully', 'success');
+      this.toastService.show('Admin PIN updated and securely encrypted!', 'success');
       return true;
     } catch (e) {
       return false;

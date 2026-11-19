@@ -19,8 +19,11 @@ import { IconComponent } from '../../shared/components/icon/icon.component';
         </button>
 
         <div class="modal-image-container">
-          <img [src]="dish.imageUrl" [alt]="dish.name" class="modal-food-img" />
+          <img [src]="dish.imageUrl" [alt]="dish.name" class="modal-food-img" [class.is-out-of-stock]="!dish.isAvailable" />
           <div class="modal-image-overlay"></div>
+          @if (!dish.isAvailable) {
+            <div class="modal-not-in-stock-badge">Not in Stock</div>
+          }
           <div class="modal-diet-tag">
             <span class="diet-indicator" [ngClass]="dish.dietType"></span>
             <span class="diet-text">{{ dish.dietType === 'veg' ? 'Pure Vegetarian' : 'Non-Vegetarian' }}</span>
@@ -48,7 +51,12 @@ import { IconComponent } from '../../shared/components/icon/icon.component';
           }
 
           <div class="modal-footer-actions">
-            @if (quantity === 0) {
+            @if (!dish.isAvailable) {
+              <div class="modal-not-in-stock-banner">
+                <app-icon name="alert-circle" [size]="18" />
+                <span>Currently Not in Stock</span>
+              </div>
+            } @else if (quantity === 0) {
               <button class="btn-primary full-width" (click)="onAdd(dish)">
                 <app-icon name="plus" [size]="18" />
                 <span>Add to Cart • {{ dish.price | inr }}</span>
@@ -141,6 +149,45 @@ import { IconComponent } from '../../shared/components/icon/icon.component';
       height: 100%;
       object-fit: cover;
       display: block;
+      transition: filter 0.2s ease;
+
+      &.is-out-of-stock {
+        filter: grayscale(85%) opacity(0.85);
+      }
+    }
+
+    .modal-not-in-stock-badge {
+      position: absolute;
+      top: 14px;
+      left: 14px;
+      background: #DC2626;
+      color: #FFFFFF;
+      font-family: var(--font-heading);
+      font-size: 11.5px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      padding: 5px 12px;
+      border-radius: 6px;
+      box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4);
+      z-index: 5;
+    }
+
+    .modal-not-in-stock-banner {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      padding: 13px;
+      background: #FEE2E2;
+      border: 1.5px solid #FECACA;
+      color: #DC2626;
+      border-radius: var(--radius-md);
+      font-family: var(--font-heading);
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing: 0.02em;
     }
 
     .modal-image-overlay {
@@ -302,6 +349,10 @@ export class FoodModalComponent {
   }
 
   onAdd(dish: any): void {
+    if (!dish.isAvailable) {
+      this.toastService.show(`Sorry, "${dish.name}" is currently not in stock.`, 'warning');
+      return;
+    }
     this.cartService.addItem(dish, 1);
     this.toastService.show(`Added ${dish.name} to cart`, 'success');
   }

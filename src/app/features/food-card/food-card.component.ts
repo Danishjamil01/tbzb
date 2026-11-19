@@ -23,10 +23,10 @@ import { IconComponent } from '../../shared/components/icon/icon.component';
           (error)="handleImageError($event)"
         />
 
-        <!-- Sold Out Badge Overlay -->
+        <!-- Not in Stock Badge Overlay -->
         @if (!item.isAvailable) {
           <div class="card-sold-out-overlay">
-            <span>Sold Out</span>
+            <span>Not in Stock</span>
           </div>
         }
 
@@ -69,8 +69,8 @@ import { IconComponent } from '../../shared/components/icon/icon.component';
 
           <div class="action-box">
             @if (!item.isAvailable) {
-              <div class="sold-out-pill" title="This dish is currently out of stock">
-                <span>Sold Out</span>
+              <div class="sold-out-pill" title="This dish is currently not in stock">
+                <span>Not in Stock</span>
               </div>
             } @else if (itemQuantity === 0) {
               <button
