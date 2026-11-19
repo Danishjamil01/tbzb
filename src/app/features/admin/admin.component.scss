@@ -304,10 +304,27 @@
     cursor: pointer;
   }
 
-  .default-pin-hint {
-    color: #9CA3AF;
-    font-size: 11.5px;
+  .secure-badge-hint {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: #059669;
+    font-size: 11px;
+    font-weight: 700;
   }
+}
+
+.lockout-warning-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #FEE2E2;
+  border: 1px solid #FECACA;
+  color: #DC2626;
+  padding: 9px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
 }
 
 .btn-login-submit {

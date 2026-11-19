@@ -32,6 +32,12 @@ export class AdminService {
   isAdminOpen = signal<boolean>(false);
   isAuthenticated = signal<boolean>(this.checkSavedSession());
 
+  // Security: Brute-force protection & Lockout
+  private readonly MASTER_PIN = '786925';
+  private readonly MASTER_KEY = 'TBZB@9164#Bidar';
+  failedAttempts = signal<number>(this.loadFailedAttempts());
+  lockoutUntil = signal<number>(this.loadLockout());
+
   // Cloud database config & sync state
   cloudConfig = signal<CloudDatabaseConfig | null>(this.loadCloudConfig());
   isSyncing = signal<boolean>(false);
@@ -100,26 +106,84 @@ export class AdminService {
     }
   }
 
+  private loadFailedAttempts(): number {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        return parseInt(localStorage.getItem('tbzb_failed_attempts') || '0', 10);
+      }
+    } catch (e) {}
+    return 0;
+  }
+
+  private loadLockout(): number {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        return parseInt(localStorage.getItem('tbzb_admin_lockout') || '0', 10);
+      }
+    } catch (e) {}
+    return 0;
+  }
+
   login(pinOrPassword: string, rememberMe = false): boolean {
+    // Check if account is temporarily locked
+    const now = Date.now();
+    const lockedUntil = this.lockoutUntil();
+    if (lockedUntil > now) {
+      const waitSec = Math.ceil((lockedUntil - now) / 1000);
+      this.toastService.show(`Security Lockout: Too many failed attempts. Try again in ${waitSec}s.`, 'error');
+      return false;
+    }
+
     const trimmed = (pinOrPassword || '').trim();
     const savedPin = this.getSavedPin();
 
-    // Valid if matches saved PIN or master passwords
-    if (trimmed === savedPin || trimmed === '1234' || trimmed === 'tbzb@bidar' || trimmed === 'tbzb@1234') {
-      this.isAuthenticated.set(true);
+    // Valid if matches saved custom PIN, master 6-digit PIN, or master alphanumeric key
+    const isMatch = trimmed === savedPin || trimmed === this.MASTER_PIN || trimmed === this.MASTER_KEY;
+
+    if (isMatch) {
+      // Reset lockout & failed attempts on success
+      this.failedAttempts.set(0);
+      this.lockoutUntil.set(0);
       try {
         if (typeof window !== 'undefined') {
+          localStorage.removeItem('tbzb_failed_attempts');
+          localStorage.removeItem('tbzb_admin_lockout');
           sessionStorage.setItem('tbzb_admin_auth', 'true');
           if (rememberMe) {
             localStorage.setItem('tbzb_admin_auth', 'true');
           }
         }
       } catch (e) {}
-      this.toastService.show('Admin logged in successfully', 'success');
+
+      this.isAuthenticated.set(true);
+      this.toastService.show('Admin authentication successful', 'success');
       return true;
     }
 
-    this.toastService.show('Invalid PIN or password', 'error');
+    // Handle failed attempt & lockout
+    const attempts = this.failedAttempts() + 1;
+    this.failedAttempts.set(attempts);
+    try {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('tbzb_failed_attempts', String(attempts));
+      }
+    } catch (e) {}
+
+    if (attempts >= 5) {
+      const lockDuration = 5 * 60 * 1000; // 5 minutes lock
+      const newLockUntil = Date.now() + lockDuration;
+      this.lockoutUntil.set(newLockUntil);
+      try {
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('tbzb_admin_lockout', String(newLockUntil));
+        }
+      } catch (e) {}
+      this.toastService.show('Security Alert: 5 incorrect attempts. Admin access locked for 5 minutes.', 'error');
+    } else {
+      const remainingAttempts = 5 - attempts;
+      this.toastService.show(`Invalid PIN. ${remainingAttempts} ${remainingAttempts === 1 ? 'attempt' : 'attempts'} left before lockout.`, 'error');
+    }
+
     return false;
   }
 
@@ -137,20 +201,21 @@ export class AdminService {
   getSavedPin(): string {
     try {
       if (typeof window !== 'undefined' && window.localStorage) {
-        return localStorage.getItem('tbzb_admin_pin') || '1234';
+        return localStorage.getItem('tbzb_admin_pin') || this.MASTER_PIN;
       }
     } catch (e) {}
-    return '1234';
+    return this.MASTER_PIN;
   }
 
   updatePin(newPin: string): boolean {
-    if (!newPin || newPin.trim().length < 4) {
-      this.toastService.show('PIN must be at least 4 digits', 'warning');
+    const trimmed = (newPin || '').trim();
+    if (!trimmed || trimmed.length < 6) {
+      this.toastService.show('New PIN must be at least 6 digits for security', 'warning');
       return false;
     }
     try {
       if (typeof window !== 'undefined' && window.localStorage) {
-        localStorage.setItem('tbzb_admin_pin', newPin.trim());
+        localStorage.setItem('tbzb_admin_pin', trimmed);
       }
       this.toastService.show('Admin PIN updated successfully', 'success');
       return true;

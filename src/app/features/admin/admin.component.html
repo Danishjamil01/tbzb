@@ -54,12 +54,13 @@
                   <input
                     id="adminPin"
                     [type]="showPassword ? 'text' : 'password'"
-                    placeholder="Enter PIN (e.g. 1234)"
+                    placeholder="Enter Secret Admin PIN"
                     [(ngModel)]="pinInput"
                     name="adminPin"
                     autocomplete="current-password"
                     autofocus
                     required
+                    [disabled]="isLockedOut()"
                   />
                   <button
                     type="button"
@@ -72,17 +73,27 @@
                 </div>
               </div>
 
+              @if (isLockedOut()) {
+                <div class="lockout-warning-banner">
+                  <app-icon name="alert-circle" [size]="16" />
+                  <span>Too many failed attempts. Login locked for 5 minutes.</span>
+                </div>
+              }
+
               <div class="login-meta-row">
                 <label class="remember-label">
                   <input type="checkbox" [(ngModel)]="rememberMe" name="rememberMe" />
-                  <span>Remember on this phone / browser</span>
+                  <span>Remember on this device</span>
                 </label>
-                <span class="default-pin-hint">Default: <strong>1234</strong></span>
+                <span class="secure-badge-hint">
+                  <app-icon name="shield-check" [size]="13" />
+                  <span>Authorized Access Only</span>
+                </span>
               </div>
 
-              <button type="submit" class="btn-login-submit">
+              <button type="submit" class="btn-login-submit" [disabled]="isLockedOut()">
                 <app-icon name="lock" [size]="18" />
-                <span>Access Kitchen Dashboard</span>
+                <span>{{ isLockedOut() ? 'Locked (Wait 5 mins)' : 'Access Kitchen Dashboard' }}</span>
               </button>
             </form>
           </div>

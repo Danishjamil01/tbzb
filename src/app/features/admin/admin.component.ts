@@ -48,6 +48,9 @@ export class AdminComponent {
   cloudCollection = 'tbzb_menu';
   cloudAutoSync = true;
 
+  // Security lockout computed
+  isLockedOut = computed(() => this.adminService.lockoutUntil() > Date.now());
+
   // Category list
   categories = this.menuService.categories;
 
