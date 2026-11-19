@@ -1,0 +1,42 @@
+<div class="app-layout">
+  <!-- Global Header -->
+  <app-header (openHoursModal)="openHoursModal()"></app-header>
+
+  <!-- Main Website Content -->
+  <main class="main-content" id="main-content">
+    <!-- Hero Section -->
+    <app-hero></app-hero>
+
+    <!-- Category Quick Navigation -->
+    <app-category-nav></app-category-nav>
+
+    <!-- Popular Delicacies Section -->
+    <app-featured></app-featured>
+
+    <!-- Special Signature Product: Kunafa Jar -->
+    <app-kunafa-spotlight></app-kunafa-spotlight>
+
+    <!-- Full Interactive Food Menu -->
+    <app-menu></app-menu>
+
+    <!-- About TBZB Cloud Kitchen -->
+    <app-about></app-about>
+
+    <!-- Contact, Location & Delivery Info -->
+    <app-contact></app-contact>
+  </main>
+
+  <!-- Footer -->
+  <app-footer></app-footer>
+
+  <!-- Interactive Drawers, Modals & Floating Utilities -->
+  <app-cart-drawer></app-cart-drawer>
+  <app-food-modal></app-food-modal>
+  <app-checkout-modal></app-checkout-modal>
+  <app-order-confirmation-modal></app-order-confirmation-modal>
+  <app-hours-modal></app-hours-modal>
+  <app-floating-whatsapp></app-floating-whatsapp>
+  <app-toast-container></app-toast-container>
+  <app-all-dishes></app-all-dishes>
+  <app-admin></app-admin>
+</div>

@@ -1,0 +1,640 @@
+@if (adminService.isAdminOpen()) {
+  <div class="admin-backdrop" (click)="onClose()"></div>
+
+  <div class="admin-panel-container" role="dialog" aria-modal="true" aria-label="TBZB Kitchen Admin Panel">
+    <!-- Top Header Bar -->
+    <header class="admin-header">
+      <div class="admin-brand">
+        <div class="brand-badge">TBZB</div>
+        <div class="brand-meta">
+          <h2 class="admin-title">Kitchen Admin Panel</h2>
+          <span class="admin-sub">The Bite Zone • Bidar Cloud Kitchen</span>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <!-- Live Kitchen Status Pill -->
+        <div class="status-pill" [ngClass]="statusService.status().isOpen ? 'open' : 'closed'">
+          <span class="dot"></span>
+          <span class="status-label">{{ statusService.status().statusText }}</span>
+        </div>
+
+        @if (adminService.isAuthenticated()) {
+          <button class="btn-logout" (click)="onLogout()" title="Logout Admin">
+            <app-icon name="unlock" [size]="16" />
+            <span class="btn-text-desktop">Logout</span>
+          </button>
+        }
+
+        <button class="btn-close" (click)="onClose()" aria-label="Close admin panel">
+          <app-icon name="x" [size]="22" />
+        </button>
+      </div>
+    </header>
+
+    <!-- Content Area -->
+    <div class="admin-body">
+      <!-- 1. LOGIN SCREEN (If not authenticated) -->
+      @if (!adminService.isAuthenticated()) {
+        <div class="login-view">
+          <div class="login-card">
+            <div class="lock-icon-wrap">
+              <app-icon name="lock" [size]="32" />
+            </div>
+
+            <h3 class="login-heading">Owner & Kitchen Login</h3>
+            <p class="login-subtext">
+              Enter your secret admin PIN or password to manage menu dishes, prices, and kitchen operations.
+            </p>
+
+            <form class="login-form" (ngSubmit)="onLogin()">
+              <div class="input-group">
+                <label for="adminPin">Admin PIN / Password</label>
+                <div class="input-field-wrap">
+                  <input
+                    id="adminPin"
+                    [type]="showPassword ? 'text' : 'password'"
+                    placeholder="Enter PIN (e.g. 1234)"
+                    [(ngModel)]="pinInput"
+                    name="adminPin"
+                    autocomplete="current-password"
+                    autofocus
+                    required
+                  />
+                  <button
+                    type="button"
+                    class="btn-toggle-eye"
+                    (click)="showPassword = !showPassword"
+                    [title]="showPassword ? 'Hide PIN' : 'Show PIN'"
+                  >
+                    <app-icon [name]="showPassword ? 'eye-off' : 'eye'" [size]="18" />
+                  </button>
+                </div>
+              </div>
+
+              <div class="login-meta-row">
+                <label class="remember-label">
+                  <input type="checkbox" [(ngModel)]="rememberMe" name="rememberMe" />
+                  <span>Remember on this phone / browser</span>
+                </label>
+                <span class="default-pin-hint">Default: <strong>1234</strong></span>
+              </div>
+
+              <button type="submit" class="btn-login-submit">
+                <app-icon name="lock" [size]="18" />
+                <span>Access Kitchen Dashboard</span>
+              </button>
+            </form>
+          </div>
+        </div>
+      } @else {
+        <!-- 2. AUTHENTICATED DASHBOARD -->
+
+        <!-- Quick Metrics Bar -->
+        <div class="admin-stats-strip">
+          <div class="stat-card">
+            <span class="stat-num">{{ totalCount() }}</span>
+            <span class="stat-label">Total Dishes</span>
+          </div>
+          <div class="stat-card in-stock">
+            <span class="stat-num">{{ inStockCount() }}</span>
+            <span class="stat-label">In Stock (Available)</span>
+          </div>
+          <div class="stat-card sold-out">
+            <span class="stat-num">{{ soldOutCount() }}</span>
+            <span class="stat-label">Sold Out (Disabled)</span>
+          </div>
+          <div class="stat-card cloud">
+            <span class="stat-mode">
+              {{ adminService.cloudConfig() ? 'Cloud Synced' : 'Local Storage' }}
+            </span>
+            <span class="stat-label">
+              {{ adminService.lastSyncTime() ? 'Last Sync: ' + adminService.lastSyncTime() : 'Ready for Cloud' }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <nav class="admin-tabs">
+          <button
+            class="tab-btn"
+            [class.active]="activeTab() === 'dishes'"
+            (click)="activeTab.set('dishes')"
+          >
+            <app-icon name="utensils" [size]="18" />
+            <span>Dishes & Menu ({{ totalCount() }})</span>
+          </button>
+          <button
+            class="tab-btn"
+            [class.active]="activeTab() === 'kitchen'"
+            (click)="activeTab.set('kitchen')"
+          >
+            <app-icon name="chef-hat" [size]="18" />
+            <span>Kitchen Timings & Override</span>
+          </button>
+          <button
+            class="tab-btn"
+            [class.active]="activeTab() === 'cloud'"
+            (click)="activeTab.set('cloud')"
+          >
+            <app-icon name="database" [size]="18" />
+            <span>Free Cloud Database (Firebase)</span>
+          </button>
+          <button
+            class="tab-btn"
+            [class.active]="activeTab() === 'security'"
+            (click)="activeTab.set('security')"
+          >
+            <app-icon name="settings" [size]="18" />
+            <span>Settings & Backup</span>
+          </button>
+        </nav>
+
+        <!-- TAB 1: DISHES & MENU -->
+        @if (activeTab() === 'dishes') {
+          <div class="tab-content dishes-tab">
+            <!-- Action / Filter Toolbar -->
+            <div class="dishes-toolbar">
+              <div class="toolbar-left">
+                <!-- Search Box -->
+                <div class="admin-search-wrap">
+                  <app-icon name="search" [size]="16" class="search-icon" />
+                  <input
+                    type="text"
+                    placeholder="Search dishes by name..."
+                    [(ngModel)]="dishSearch"
+                  />
+                  @if (dishSearch) {
+                    <button class="btn-clear-search" (click)="dishSearch = ''">
+                      <app-icon name="x" [size]="14" />
+                    </button>
+                  }
+                </div>
+
+                <!-- Category Filter Select -->
+                <select class="admin-select" [(ngModel)]="selectedCategoryFilter">
+                  <option value="all">All Categories</option>
+                  <option value="non-veg">Non-Veg</option>
+                  <option value="veg">Pure Veg</option>
+                  <option value="south-indian">South Indian</option>
+                  <option value="sweets">Sweets</option>
+                  <option value="juices">Juices & Drinks</option>
+                </select>
+
+                <!-- Stock Filter Select -->
+                <select class="admin-select" [(ngModel)]="availabilityFilter">
+                  <option value="all">All Stock Status</option>
+                  <option value="in-stock">In Stock Only</option>
+                  <option value="sold-out">Sold Out Only</option>
+                </select>
+              </div>
+
+              <div class="toolbar-right">
+                <button class="btn-add-dish" (click)="openAddDishModal()">
+                  <app-icon name="plus" [size]="18" />
+                  <span>Add New Dish</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Dishes Table / List -->
+            <div class="dishes-list-wrap">
+              @if (filteredDishes().length === 0) {
+                <div class="no-dishes-state">
+                  <app-icon name="info" [size]="32" />
+                  <p>No dishes match the current filter or search query.</p>
+                </div>
+              } @else {
+                <div class="dishes-table">
+                  <div class="table-header">
+                    <span class="th-dish">Dish Details</span>
+                    <span class="th-cat">Category</span>
+                    <span class="th-price">Price (₹)</span>
+                    <span class="th-stock">Availability / Stock</span>
+                    <span class="th-actions">Actions</span>
+                  </div>
+
+                  <div class="table-body">
+                    @for (dish of filteredDishes(); track dish.id) {
+                      <div class="dish-row" [class.is-out-of-stock]="!dish.isAvailable">
+                        <!-- Dish Details -->
+                        <div class="td-dish">
+                          <img [src]="dish.imageUrl" [alt]="dish.name" class="dish-thumb" loading="lazy" />
+                          <div class="dish-info">
+                            <div class="dish-name-line">
+                              <span
+                                class="diet-dot"
+                                [ngClass]="dish.dietType === 'veg' ? 'veg' : 'non-veg'"
+                              ></span>
+                              <strong class="dish-name">{{ dish.name }}</strong>
+                              @if (dish.featured) {
+                                <span class="badge-featured">Popular</span>
+                              }
+                            </div>
+                            <p class="dish-desc">{{ dish.description }}</p>
+                          </div>
+                        </div>
+
+                        <!-- Category -->
+                        <div class="td-cat">
+                          <span class="cat-chip">{{ dish.category }}</span>
+                        </div>
+
+                        <!-- Price (with inline edit) -->
+                        <div class="td-price">
+                          <div class="inline-price-box">
+                            <span class="rupee-sym">₹</span>
+                            <input
+                              type="number"
+                              [value]="dish.price"
+                              #priceInput
+                              (change)="updateDishPriceInline(dish, priceInput.value)"
+                              class="price-edit-input"
+                              title="Click to edit price"
+                            />
+                          </div>
+                        </div>
+
+                        <!-- Stock Availability Switch -->
+                        <div class="td-stock">
+                          <button
+                            class="stock-toggle-btn"
+                            [ngClass]="dish.isAvailable ? 'available' : 'unavailable'"
+                            (click)="toggleDishStock(dish)"
+                            [title]="dish.isAvailable ? 'Click to mark Sold Out' : 'Click to mark In Stock'"
+                          >
+                            <span class="toggle-dot"></span>
+                            <span class="toggle-text">
+                              {{ dish.isAvailable ? 'In Stock' : 'Sold Out' }}
+                            </span>
+                          </button>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="td-actions">
+                          <button
+                            class="action-btn edit"
+                            (click)="openEditDishModal(dish)"
+                            title="Edit full dish details"
+                          >
+                            <app-icon name="edit" [size]="16" />
+                            <span>Edit</span>
+                          </button>
+                          <button
+                            class="action-btn delete"
+                            (click)="deleteDish(dish)"
+                            title="Delete dish from menu"
+                          >
+                            <app-icon name="trash-2" [size]="16" />
+                          </button>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        }
+
+        <!-- TAB 2: KITCHEN CONTROLS & TIMINGS -->
+        @if (activeTab() === 'kitchen') {
+          <div class="tab-content kitchen-tab">
+            <div class="admin-card">
+              <div class="card-head">
+                <app-icon name="clock" [size]="22" />
+                <h3>Kitchen Operating Controls</h3>
+              </div>
+              <p class="card-desc">
+                Normal kitchen operating hours are <strong>10:00 AM to 1:00 AM (Next Day)</strong>.
+                You can override this anytime to manually open or pause orders during emergencies or holidays.
+              </p>
+
+              <div class="override-grid">
+                <!-- Option 1: Automatic -->
+                <div
+                  class="override-card"
+                  [class.selected]="statusService.kitchenOverride() === 'auto'"
+                  (click)="setKitchenMode('auto')"
+                >
+                  <div class="radio-circle"></div>
+                  <div class="override-info">
+                    <h4>Automatic Schedule</h4>
+                    <p>Follows standard timings (10:00 AM – 1:00 AM). Automatically opens and closes on time.</p>
+                  </div>
+                </div>
+
+                <!-- Option 2: Force Open -->
+                <div
+                  class="override-card open"
+                  [class.selected]="statusService.kitchenOverride() === 'open'"
+                  (click)="setKitchenMode('open')"
+                >
+                  <div class="radio-circle"></div>
+                  <div class="override-info">
+                    <h4>🟢 Force Open Kitchen</h4>
+                    <p>Kitchen stays open 24/7 or for special occasions. Customers can order immediately.</p>
+                  </div>
+                </div>
+
+                <!-- Option 3: Force Closed / Paused -->
+                <div
+                  class="override-card closed"
+                  [class.selected]="statusService.kitchenOverride() === 'closed'"
+                  (click)="setKitchenMode('closed')"
+                >
+                  <div class="radio-circle"></div>
+                  <div class="override-info">
+                    <h4>🔴 Pause Kitchen Orders</h4>
+                    <p>Temporarily stops accepting orders. All checkout buttons on website are disabled.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Delivery Policy Reference Card -->
+            <div class="admin-card">
+              <div class="card-head">
+                <app-icon name="motorcycle" [size]="22" />
+                <h3>Delivery Fees & Service Area</h3>
+              </div>
+              <div class="delivery-rules-list">
+                <div class="rule-item">
+                  <strong>Service Radius:</strong> Strictly within 18 km of TBZB Cloud Kitchen (Bidar city limits).
+                </div>
+                <div class="rule-item">
+                  <strong>Daytime Delivery (10:00 AM – 12:00 AM):</strong> Delivery charge confirmed directly on WhatsApp upon kitchen order review.
+                </div>
+                <div class="rule-item">
+                  <strong>Late-Night Delivery (12:00 AM – 1:00 AM):</strong> Flat ₹70 late-night delivery charge applied automatically.
+                </div>
+              </div>
+            </div>
+          </div>
+        }
+
+        <!-- TAB 3: FREE CLOUD DATABASE (FIREBASE) -->
+        @if (activeTab() === 'cloud') {
+          <div class="tab-content cloud-tab">
+            <div class="admin-card">
+              <div class="card-head">
+                <app-icon name="database" [size]="22" />
+                <h3>Google Firebase Cloud Sync (100% Free Forever)</h3>
+              </div>
+              <p class="card-desc">
+                Google Firebase gives you <strong>50,000 free reads/day</strong>.
+                Connecting Firebase ensures that whenever you edit a dish price or mark an item "Sold Out" from your phone,
+                <strong>every customer visiting your website sees the update in real-time</strong>!
+              </p>
+
+              <!-- Setup Steps Guide -->
+              <div class="setup-guide-box">
+                <h4 class="guide-title">How to connect in 2 minutes:</h4>
+                <ol class="guide-steps">
+                  <li>Go to <a href="https://console.firebase.google.com" target="_blank" rel="noopener">console.firebase.google.com</a> (sign in with your Google account).</li>
+                  <li>Click <strong>Create a project</strong> and name it <code>tbzb-bidar</code>.</li>
+                  <li>In the sidebar, click <strong>Build &gt; Firestore Database</strong> &gt; <strong>Create Database</strong> (select "Start in test mode").</li>
+                  <li>Copy your <strong>Project ID</strong> (from Project Settings) and paste it below.</li>
+                </ol>
+              </div>
+
+              <!-- Firebase Config Form -->
+              <div class="cloud-form">
+                <div class="form-row">
+                  <div class="form-col">
+                    <label for="cloudProject">Firebase Project ID <span class="req">*</span></label>
+                    <input
+                      id="cloudProject"
+                      type="text"
+                      placeholder="e.g. tbzb-bidar-app"
+                      [(ngModel)]="cloudProjectId"
+                    />
+                  </div>
+                  <div class="form-col">
+                    <label for="cloudColl">Firestore Collection</label>
+                    <input
+                      id="cloudColl"
+                      type="text"
+                      placeholder="tbzb_menu"
+                      [(ngModel)]="cloudCollection"
+                    />
+                  </div>
+                </div>
+
+                <div class="form-actions-row">
+                  <button class="btn-save-cloud" (click)="saveCloudSettings()">
+                    <app-icon name="save" [size]="16" />
+                    <span>Save Cloud Connection</span>
+                  </button>
+
+                  @if (adminService.cloudConfig()) {
+                    <button class="btn-disconnect-cloud" (click)="removeCloudSettings()">
+                      Disconnect Cloud
+                    </button>
+                  }
+                </div>
+              </div>
+
+              <!-- Manual Sync Triggers -->
+              @if (adminService.cloudConfig()) {
+                <div class="sync-actions-card">
+                  <h4>Live Cloud Synchronization</h4>
+                  <p>Publish current menu to Cloud or pull the latest changes:</p>
+                  <div class="sync-btns">
+                    <button
+                      class="btn-sync push"
+                      [disabled]="adminService.isSyncing()"
+                      (click)="triggerCloudPush()"
+                    >
+                      <app-icon name="refresh-cw" [size]="16" />
+                      <span>{{ adminService.isSyncing() ? 'Syncing...' : 'Push Menu to Cloud (Publish Live)' }}</span>
+                    </button>
+                    <button
+                      class="btn-sync pull"
+                      [disabled]="adminService.isSyncing()"
+                      (click)="triggerCloudPull()"
+                    >
+                      <span>Fetch Latest from Cloud</span>
+                    </button>
+                  </div>
+                  @if (adminService.lastSyncTime()) {
+                    <span class="last-sync-tag">Last Synced: {{ adminService.lastSyncTime() }}</span>
+                  }
+                </div>
+              }
+            </div>
+
+            <!-- Backup & Restore -->
+            <div class="admin-card">
+              <div class="card-head">
+                <app-icon name="save" [size]="22" />
+                <h3>Backup & Restore Menu</h3>
+              </div>
+              <p class="card-desc">
+                Download a JSON backup of your entire menu, or upload a previously saved file.
+              </p>
+              <div class="backup-btns-row">
+                <button class="btn-backup" (click)="adminService.exportMenuJson()">
+                  <app-icon name="arrow-right" [size]="16" />
+                  <span>Download Menu Backup (JSON)</span>
+                </button>
+
+                <label class="btn-restore">
+                  <app-icon name="plus" [size]="16" />
+                  <span>Restore Menu from File</span>
+                  <input type="file" accept=".json" (change)="onFileSelected($event)" style="display: none;" />
+                </label>
+              </div>
+            </div>
+          </div>
+        }
+
+        <!-- TAB 4: ADMIN SECURITY & SETTINGS -->
+        @if (activeTab() === 'security') {
+          <div class="tab-content security-tab">
+            <!-- Change PIN Card -->
+            <div class="admin-card">
+              <div class="card-head">
+                <app-icon name="lock" [size]="22" />
+                <h3>Change Admin PIN</h3>
+              </div>
+              <p class="card-desc">
+                Keep your kitchen dashboard secure. Choose a minimum 4-digit PIN for quick mobile login.
+              </p>
+
+              <div class="pin-change-form">
+                <div class="form-row">
+                  <div class="form-col">
+                    <label for="newPin">New PIN (4+ digits)</label>
+                    <input
+                      id="newPin"
+                      type="password"
+                      placeholder="e.g. 5678"
+                      [(ngModel)]="newPinInput"
+                    />
+                  </div>
+                  <div class="form-col">
+                    <label for="confirmPin">Confirm New PIN</label>
+                    <input
+                      id="confirmPin"
+                      type="password"
+                      placeholder="Re-enter PIN"
+                      [(ngModel)]="confirmPinInput"
+                    />
+                  </div>
+                </div>
+
+                <button class="btn-update-pin" (click)="onChangePin()">
+                  <app-icon name="check" [size]="16" />
+                  <span>Update Admin PIN</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Danger Zone -->
+            <div class="admin-card danger-card">
+              <div class="card-head danger-head">
+                <app-icon name="alert-circle" [size]="22" />
+                <h3>Danger Zone: Reset Menu</h3>
+              </div>
+              <p class="card-desc">
+                Reset all dishes, categories, and prices back to TBZB's original defaults. This will discard all custom changes.
+              </p>
+              <button class="btn-danger-reset" (click)="onResetDefaults()">
+                <app-icon name="refresh-cw" [size]="16" />
+                <span>Reset to TBZB Original Menu</span>
+              </button>
+            </div>
+          </div>
+        }
+      }
+    </div>
+  </div>
+
+  <!-- DISH EDIT / ADD MODAL -->
+  @if (isEditModalOpen()) {
+    <div class="modal-sub-backdrop" (click)="closeEditModal()"></div>
+    <div class="dish-edit-modal" role="dialog" aria-modal="true">
+      <div class="modal-head">
+        <h4>{{ isNewDishMode() ? 'Add New Dish to Menu' : 'Edit Dish: ' + editingDish.name }}</h4>
+        <button class="btn-close-sub" (click)="closeEditModal()">
+          <app-icon name="x" [size]="20" />
+        </button>
+      </div>
+
+      <div class="modal-form">
+        <!-- Name & Price -->
+        <div class="form-row">
+          <div class="form-col flex-2">
+            <label for="dishName">Dish Name <span class="req">*</span></label>
+            <input id="dishName" type="text" [(ngModel)]="editingDish.name" placeholder="e.g. Chicken Dum Biryani" />
+          </div>
+          <div class="form-col">
+            <label for="dishPrice">Price (₹) <span class="req">*</span></label>
+            <input id="dishPrice" type="number" [(ngModel)]="editingDish.price" placeholder="149" />
+          </div>
+        </div>
+
+        <!-- Category & Diet Type -->
+        <div class="form-row">
+          <div class="form-col">
+            <label for="dishCat">Category</label>
+            <select id="dishCat" [(ngModel)]="editingDish.category">
+              <option value="non-veg">Non-Veg</option>
+              <option value="veg">Pure Veg</option>
+              <option value="south-indian">South Indian</option>
+              <option value="sweets">Sweets</option>
+              <option value="juices">Juices & Drinks</option>
+            </select>
+          </div>
+          <div class="form-col">
+            <label for="dishDiet">Diet Type</label>
+            <select id="dishDiet" [(ngModel)]="editingDish.dietType">
+              <option value="non-veg">Non-Veg (Red Mark)</option>
+              <option value="veg">Pure Veg (Green Mark)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Image URL -->
+        <div class="form-col">
+          <label for="dishImg">Image URL</label>
+          <input id="dishImg" type="text" [(ngModel)]="editingDish.imageUrl" placeholder="https://..." />
+        </div>
+
+        <!-- Description -->
+        <div class="form-col">
+          <label for="dishDesc">Description / Ingredients</label>
+          <textarea
+            id="dishDesc"
+            rows="3"
+            [(ngModel)]="editingDish.description"
+            placeholder="Slow cooked with fragrant basmati rice..."
+          ></textarea>
+        </div>
+
+        <!-- Toggles -->
+        <div class="modal-toggles-row">
+          <label class="toggle-checkbox">
+            <input type="checkbox" [(ngModel)]="editingDish.isAvailable" />
+            <span>In Stock (Available for ordering)</span>
+          </label>
+          <label class="toggle-checkbox">
+            <input type="checkbox" [(ngModel)]="editingDish.featured" />
+            <span>Highlight in "Popular Dishes"</span>
+          </label>
+        </div>
+
+        <!-- Save Buttons -->
+        <div class="modal-actions-row">
+          <button type="button" class="btn-cancel" (click)="closeEditModal()">Cancel</button>
+          <button type="button" class="btn-save-dish" (click)="saveDish()">
+            <app-icon name="check" [size]="16" />
+            <span>{{ isNewDishMode() ? 'Add Dish to Menu' : 'Save Changes' }}</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+}
+
