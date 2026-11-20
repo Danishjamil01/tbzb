@@ -1004,10 +1004,158 @@
           </div>
         </div>
 
-        <!-- Image URL -->
-        <div class="form-col">
-          <label for="dishImg">Image URL</label>
-          <input id="dishImg" type="text" [(ngModel)]="editingDish.imageUrl" placeholder="https://..." />
+        <!-- Dish Image Manager (Gallery, Camera, Link) -->
+        <div class="dish-image-section">
+          <label class="section-label">Dish Image / Photo</label>
+
+          <!-- Current Image Preview Box -->
+          <div class="image-preview-card">
+            @if (editingDish.imageUrl) {
+              <div class="preview-img-wrap">
+                <img [src]="editingDish.imageUrl" [alt]="editingDish.name || 'Dish preview'" (error)="onImgError($event)" />
+                <button type="button" class="btn-remove-img" (click)="removeDishImage()" title="Remove this photo">
+                  <app-icon name="trash-2" [size]="14" />
+                  <span>Remove Photo</span>
+                </button>
+              </div>
+            } @else {
+              <div class="no-image-placeholder">
+                <app-icon name="image" [size]="32" />
+                <span>No image selected yet. Choose an option below:</span>
+              </div>
+            }
+          </div>
+
+          <!-- Source Selection Tabs -->
+          <div class="image-source-tabs">
+            <button
+              type="button"
+              class="source-tab"
+              [class.active]="imageSourceTab() === 'gallery'"
+              (click)="imageSourceTab.set('gallery')"
+            >
+              <app-icon name="image" [size]="15" />
+              <span>Gallery / File</span>
+            </button>
+
+            <button
+              type="button"
+              class="source-tab"
+              [class.active]="imageSourceTab() === 'camera'"
+              (click)="imageSourceTab.set('camera')"
+            >
+              <app-icon name="camera" [size]="15" />
+              <span>Camera</span>
+            </button>
+
+            <button
+              type="button"
+              class="source-tab"
+              [class.active]="imageSourceTab() === 'url'"
+              (click)="imageSourceTab.set('url')"
+            >
+              <app-icon name="link" [size]="15" />
+              <span>Image Link</span>
+            </button>
+          </div>
+
+          <!-- Hidden File Inputs -->
+          <!-- 1. Gallery file picker -->
+          <input
+            #galleryFileInput
+            type="file"
+            accept="image/*"
+            style="display: none"
+            (change)="onImageFileSelected($event)"
+          />
+
+          <!-- 2. Mobile camera trigger (opens native phone camera) -->
+          <input
+            #mobileCameraInput
+            type="file"
+            accept="image/*"
+            capture="environment"
+            style="display: none"
+            (change)="onImageFileSelected($event)"
+          />
+
+          <!-- TAB 1: Gallery / Device Upload -->
+          @if (imageSourceTab() === 'gallery') {
+            <div class="source-content">
+              <button
+                type="button"
+                class="btn-source-action primary"
+                (click)="galleryFileInput.click()"
+                [disabled]="isProcessingImage()"
+              >
+                <app-icon name="upload" [size]="16" />
+                <span>{{ isProcessingImage() ? 'Compressing & Loading...' : 'Choose Photo from Gallery / Device' }}</span>
+              </button>
+              <p class="source-hint">Select any photo (JPG, PNG, WebP) from your phone gallery or files. It is automatically optimized for fast loading.</p>
+            </div>
+          }
+
+          <!-- TAB 2: Camera Capture -->
+          @if (imageSourceTab() === 'camera') {
+            <div class="source-content">
+              <div class="camera-actions-row">
+                <!-- Native Camera for Phones -->
+                <button
+                  type="button"
+                  class="btn-source-action primary"
+                  (click)="mobileCameraInput.click()"
+                  [disabled]="isProcessingImage()"
+                >
+                  <app-icon name="camera" [size]="16" />
+                  <span>{{ isProcessingImage() ? 'Processing Photo...' : 'Open Phone Camera' }}</span>
+                </button>
+
+                <!-- Live Viewfinder for Webcam / Laptop -->
+                @if (!isCameraActive()) {
+                  <button
+                    type="button"
+                    class="btn-source-action secondary"
+                    (click)="startLiveCamera(liveVideo)"
+                  >
+                    <app-icon name="eye" [size]="15" />
+                    <span>Live Viewfinder</span>
+                  </button>
+                }
+              </div>
+
+              <!-- Live Viewfinder Box -->
+              <div class="live-viewfinder-box" [style.display]="isCameraActive() ? 'flex' : 'none'">
+                <video #liveVideo playsinline autoplay class="camera-video-feed"></video>
+                <div class="viewfinder-btns">
+                  <button type="button" class="btn-snap" (click)="captureLivePhoto(liveVideo)">
+                    <app-icon name="camera" [size]="16" />
+                    <span>Take Photo</span>
+                  </button>
+                  <button type="button" class="btn-stop-cam" (click)="stopLiveCamera()">
+                    <span>Cancel</span>
+                  </button>
+                </div>
+              </div>
+
+              <p class="source-hint">Tap "Open Phone Camera" on your phone to take a live photo of your dish, or use "Live Viewfinder" if you are on a laptop.</p>
+            </div>
+          }
+
+          <!-- TAB 3: Web Image URL -->
+          @if (imageSourceTab() === 'url') {
+            <div class="source-content">
+              <div class="url-input-wrap">
+                <input
+                  id="dishImg"
+                  type="text"
+                  [(ngModel)]="editingDish.imageUrl"
+                  placeholder="https://images.unsplash.com/... or paste image link"
+                  class="input-url"
+                />
+              </div>
+              <p class="source-hint">Paste any direct image URL from Unsplash, Google Drive, Swiggy, Zomato, or your web hosting.</p>
+            </div>
+          }
         </div>
 
         <!-- Description -->

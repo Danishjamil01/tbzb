@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed } from '@angular/core';
+import { Component, inject, signal, computed, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AdminService, CloudDatabaseConfig } from '../../core/services/admin.service';
@@ -18,7 +18,7 @@ import { InrPipe } from '../../shared/pipes/inr.pipe';
   templateUrl: './admin.component.html',
   styleUrl: './admin.component.scss'
 })
-export class AdminComponent {
+export class AdminComponent implements OnDestroy {
   adminService = inject(AdminService);
   menuService = inject(MenuService);
   statusService = inject(BusinessStatusService);
@@ -42,6 +42,12 @@ export class AdminComponent {
   isEditModalOpen = signal<boolean>(false);
   isNewDishMode = signal<boolean>(false);
   editingDish: MenuItem = this.getEmptyDish();
+
+  // Image Upload & Source State (Gallery, Camera, URL)
+  imageSourceTab = signal<'gallery' | 'camera' | 'url'>('gallery');
+  isProcessingImage = signal<boolean>(false);
+  isCameraActive = signal<boolean>(false);
+  private cameraStream: MediaStream | null = null;
 
   // New PIN Form
   newPinInput = '';
@@ -184,20 +190,166 @@ export class AdminComponent {
     }
   }
 
+  ngOnDestroy(): void {
+    this.stopLiveCamera();
+  }
+
   openAddDishModal(): void {
     this.isNewDishMode.set(true);
     this.editingDish = this.getEmptyDish();
+    this.imageSourceTab.set('gallery');
+    this.stopLiveCamera();
     this.isEditModalOpen.set(true);
   }
 
   openEditDishModal(dish: MenuItem): void {
     this.isNewDishMode.set(false);
     this.editingDish = { ...dish };
+    this.imageSourceTab.set(dish.imageUrl?.startsWith('data:') ? 'gallery' : 'url');
+    this.stopLiveCamera();
     this.isEditModalOpen.set(true);
   }
 
   closeEditModal(): void {
+    this.stopLiveCamera();
     this.isEditModalOpen.set(false);
+  }
+
+  /* ==========================================================================
+     IMAGE UPLOAD, CAMERA CAPTURE & COMPRESSION (Gallery, Camera, URL)
+     ========================================================================== */
+  async onImageFileSelected(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      this.toastService.show('Please select a valid image file (PNG, JPG, WebP)', 'warning');
+      return;
+    }
+
+    this.isProcessingImage.set(true);
+    const reader = new FileReader();
+
+    reader.onload = async (e) => {
+      try {
+        const rawDataUrl = e.target?.result as string;
+        const compressed = await this.compressImage(rawDataUrl, 800, 800, 0.82);
+        this.editingDish.imageUrl = compressed;
+        this.toastService.show('Image loaded and optimized successfully!', 'success');
+      } catch (err) {
+        console.error('Error compressing image:', err);
+        this.toastService.show('Failed to process image', 'error');
+      } finally {
+        this.isProcessingImage.set(false);
+        input.value = '';
+      }
+    };
+
+    reader.onerror = () => {
+      this.isProcessingImage.set(false);
+      this.toastService.show('Failed to read image file', 'error');
+    };
+
+    reader.readAsDataURL(file);
+  }
+
+  async compressImage(dataUrl: string, maxWidth = 800, maxHeight = 800, quality = 0.82): Promise<string> {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        let width = img.width;
+        let height = img.height;
+
+        if (width > maxWidth || height > maxHeight) {
+          if (width > height) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          } else {
+            width = Math.round((width * maxHeight) / height);
+            height = maxHeight;
+          }
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.fillStyle = '#FFFFFF';
+          ctx.fillRect(0, 0, width, height);
+          ctx.drawImage(img, 0, 0, width, height);
+          try {
+            const webpUrl = canvas.toDataURL('image/webp', quality);
+            if (webpUrl && webpUrl.startsWith('data:image/webp')) {
+              resolve(webpUrl);
+              return;
+            }
+          } catch (e) {}
+          resolve(canvas.toDataURL('image/jpeg', quality));
+        } else {
+          resolve(dataUrl);
+        }
+      };
+      img.onerror = () => resolve(dataUrl);
+      img.src = dataUrl;
+    });
+  }
+
+  async startLiveCamera(videoElement: HTMLVideoElement): Promise<void> {
+    if (!navigator.mediaDevices?.getUserMedia) {
+      this.toastService.show('Live camera not supported in this browser. Please use the camera upload button.', 'warning');
+      return;
+    }
+    try {
+      this.isCameraActive.set(true);
+      this.cameraStream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } }
+      });
+      if (videoElement) {
+        videoElement.srcObject = this.cameraStream;
+        videoElement.play();
+      }
+    } catch (err) {
+      this.isCameraActive.set(false);
+      this.toastService.show('Camera access was denied or is unavailable. Use Phone Camera instead.', 'warning');
+    }
+  }
+
+  captureLivePhoto(videoElement: HTMLVideoElement): void {
+    if (!videoElement) return;
+    const canvas = document.createElement('canvas');
+    canvas.width = videoElement.videoWidth || 640;
+    canvas.height = videoElement.videoHeight || 480;
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+      this.compressImage(dataUrl, 800, 800, 0.82).then((compressed) => {
+        this.editingDish.imageUrl = compressed;
+        this.toastService.show('Photo captured successfully!', 'success');
+        this.stopLiveCamera();
+      });
+    }
+  }
+
+  stopLiveCamera(): void {
+    if (this.cameraStream) {
+      this.cameraStream.getTracks().forEach((track) => track.stop());
+      this.cameraStream = null;
+    }
+    this.isCameraActive.set(false);
+  }
+
+  removeDishImage(): void {
+    this.editingDish.imageUrl = '';
+  }
+
+  onImgError(event: Event): void {
+    const target = event.target as HTMLImageElement;
+    if (target) {
+      target.src = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&auto=format&fit=crop&q=80';
+    }
   }
 
   saveDish(): void {
