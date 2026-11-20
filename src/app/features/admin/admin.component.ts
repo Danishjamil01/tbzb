@@ -353,25 +353,33 @@ export class AdminComponent implements OnDestroy {
   }
 
   saveDish(): void {
-    if (!this.editingDish.name.trim()) {
+    if (!this.editingDish.name || !this.editingDish.name.trim()) {
       this.toastService.show('Please enter a dish name', 'warning');
       return;
     }
-    if (this.editingDish.price <= 0) {
+    if (!this.editingDish.price || this.editingDish.price <= 0) {
       this.toastService.show('Price must be greater than 0', 'warning');
       return;
     }
 
+    const defaultPlaceholder = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&q=80';
+    const finalImageUrl = this.editingDish.imageUrl?.trim() || defaultPlaceholder;
+
     if (this.isNewDishMode()) {
       const newDish: MenuItem = {
         ...this.editingDish,
-        id: 'tbzb_' + Date.now().toString(36)
+        id: 'tbzb_' + Date.now().toString(36),
+        imageUrl: finalImageUrl
       };
       this.menuService.addItem(newDish);
       this.toastService.show(`"${newDish.name}" added to menu!`, 'success');
     } else {
-      this.menuService.updateItem(this.editingDish.id, this.editingDish);
-      this.toastService.show(`"${this.editingDish.name}" updated successfully!`, 'success');
+      const updatedDish: MenuItem = {
+        ...this.editingDish,
+        imageUrl: finalImageUrl
+      };
+      this.menuService.updateItem(updatedDish.id, updatedDish);
+      this.toastService.show(`"${updatedDish.name}" updated successfully!`, 'success');
     }
 
     if (this.adminService.cloudConfig()?.autoSync) {
@@ -497,11 +505,11 @@ export class AdminComponent implements OnDestroy {
     return {
       id: '',
       name: '',
-      price: 149,
+      price: null as unknown as number,
       category: 'non-veg',
       dietType: 'non-veg',
       description: '',
-      imageUrl: 'https://images.unsplash.com/photo-1589302168068-964664d93dc0?w=600&q=80',
+      imageUrl: '',
       isAvailable: true,
       featured: false,
       tags: []
