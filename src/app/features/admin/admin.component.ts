@@ -5,13 +5,16 @@ import { AdminService, CloudDatabaseConfig } from '../../core/services/admin.ser
 import { MenuService } from '../../core/services/menu.service';
 import { BusinessStatusService } from '../../core/services/business-status.service';
 import { ToastService } from '../../core/services/toast.service';
+import { OrderService } from '../../core/services/order.service';
 import { MenuItem, FoodCategory, DietType } from '../../core/models/menu.model';
+import { KitchenOrder, OrderStatus } from '../../core/models/order.model';
 import { IconComponent } from '../../shared/components/icon/icon.component';
+import { InrPipe } from '../../shared/pipes/inr.pipe';
 
 @Component({
   selector: 'app-admin',
   standalone: true,
-  imports: [CommonModule, FormsModule, IconComponent],
+  imports: [CommonModule, FormsModule, IconComponent, InrPipe],
   templateUrl: './admin.component.html',
   styleUrl: './admin.component.scss'
 })
@@ -20,9 +23,10 @@ export class AdminComponent {
   menuService = inject(MenuService);
   statusService = inject(BusinessStatusService);
   toastService = inject(ToastService);
+  orderService = inject(OrderService);
 
-  // Active Admin Tab
-  activeTab = signal<'dishes' | 'kitchen' | 'cloud' | 'security'>('dishes');
+  // Active Admin Tab (Default to 'orders' so kitchen sees incoming orders first)
+  activeTab = signal<'orders' | 'dishes' | 'kitchen' | 'cloud' | 'security'>('orders');
 
   // Login Form
   pinInput = '';
@@ -86,6 +90,10 @@ export class AdminComponent {
       this.cloudCollection = cfg.collectionName || 'tbzb_menu';
       this.cloudAutoSync = cfg.autoSync;
     }
+    // Start live order polling if already authenticated
+    if (this.adminService.isAuthenticated()) {
+      this.orderService.startPolling();
+    }
   }
 
   /* ==========================================================================
@@ -99,15 +107,67 @@ export class AdminComponent {
     const success = await this.adminService.login(this.pinInput, this.rememberMe);
     if (success) {
       this.pinInput = '';
+      this.orderService.startPolling();
+      this.activeTab.set('orders');
     }
   }
 
   onLogout(): void {
     this.adminService.logout();
+    this.orderService.stopPolling();
   }
 
   onClose(): void {
     this.adminService.closeAdmin();
+    this.orderService.stopPolling();
+  }
+
+  /* ==========================================================================
+     ORDER ACTIONS (KDS)
+     ========================================================================== */
+  setOrderFilter(status: 'all' | 'new' | 'preparing' | 'out_for_delivery' | 'delivered'): void {
+    this.orderService.statusFilter.set(status);
+  }
+
+  async updateOrderStatus(orderId: string, status: OrderStatus): Promise<void> {
+    await this.orderService.updateOrderStatus(orderId, status);
+  }
+
+  async deleteOrder(order: KitchenOrder): Promise<void> {
+    if (confirm(`Delete order #${order.orderId} for ${order.customerName}?`)) {
+      await this.orderService.deleteOrder(order.orderId);
+    }
+  }
+
+  refreshOrders(): void {
+    this.orderService.fetchOrders(false);
+  }
+
+  toggleSound(): void {
+    this.orderService.toggleSound();
+  }
+
+  getRelativeTime(isoString: string): string {
+    if (!isoString) return '';
+    try {
+      const diff = Math.floor((Date.now() - new Date(isoString).getTime()) / 1000);
+      if (diff < 60) return 'Just now';
+      if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+      if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+      return new Date(isoString).toLocaleDateString('en-IN', {
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch (e) {
+      return '';
+    }
+  }
+
+  getCustomerWhatsAppUrl(order: KitchenOrder): string {
+    const msg = `Hello ${order.customerName}! Your order #${order.orderId} from The Bite Zone Bidar:`;
+    return `https://wa.me/91${order.mobileNumber}?text=${encodeURIComponent(msg)}`;
   }
 
   /* ==========================================================================

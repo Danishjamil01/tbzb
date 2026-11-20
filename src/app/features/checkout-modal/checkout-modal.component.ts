@@ -6,7 +6,8 @@ import { BusinessStatusService } from '../../core/services/business-status.servi
 import { ToastService } from '../../core/services/toast.service';
 import { InrPipe } from '../../shared/pipes/inr.pipe';
 import { IconComponent } from '../../shared/components/icon/icon.component';
-import { PlacedOrder } from '../../core/models/order.model';
+import { PlacedOrder, KitchenOrder } from '../../core/models/order.model';
+import { OrderService } from '../../core/services/order.service';
 
 @Component({
   selector: 'app-checkout-modal',
@@ -988,6 +989,7 @@ export class CheckoutModalComponent {
   cartService = inject(CartService);
   private statusService = inject(BusinessStatusService);
   private toastService = inject(ToastService);
+  private orderService = inject(OrderService);
 
   status = this.statusService.status;
   config = this.statusService.config;
@@ -1216,6 +1218,32 @@ _Order placed via TBZB Online Website • Delivery strictly within Bidar_`;
       formattedWhatsAppMessage: messageText,
       whatsAppUrl
     };
+
+    // Save order into Live Kitchen Admin Portal (Firebase Firestore + Local Storage)
+    const kitchenOrder: KitchenOrder = {
+      orderId: orderRecord.orderId,
+      createdAt: new Date().toISOString(),
+      customerName: formValues.fullName,
+      mobileNumber: formValues.mobileNumber,
+      flatNumber: formValues.flatNumber,
+      areaLocality: formValues.areaLocality,
+      landmark: formValues.landmark || '',
+      googleMapsUrl: googleMapsUrl || '',
+      paymentMethod: formValues.paymentMethod,
+      upiTransactionId: formValues.upiTransactionId || '',
+      items: items.map(ci => ({
+        dishId: ci.menuItem.id,
+        name: ci.menuItem.name,
+        price: ci.menuItem.price,
+        quantity: ci.quantity,
+        total: ci.menuItem.price * ci.quantity
+      })),
+      subtotal: calc.subtotal,
+      deliveryCharge: calc.deliveryCharge || (calc.isAfterMidnight ? 70 : 0),
+      total: calc.total,
+      status: 'new'
+    };
+    this.orderService.createOrder(kitchenOrder);
 
     // Open WhatsApp
     window.open(whatsAppUrl, '_blank', 'noopener,noreferrer');

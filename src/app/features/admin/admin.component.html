@@ -26,14 +26,43 @@
         </div>
 
         @if (adminService.isAuthenticated()) {
+          <!-- Quick Orders Pill in Header -->
+          <button
+            class="btn-header-orders"
+            (click)="activeTab.set('orders')"
+            [class.active]="activeTab() === 'orders'"
+            [class.has-new]="orderService.newOrdersCount() > 0"
+            title="Live Kitchen Orders"
+          >
+            <app-icon name="bell" [size]="15" />
+            <span class="header-orders-label">Orders</span>
+            @if (orderService.activeOrdersCount() > 0) {
+              <span class="orders-pill-badge" [class.badge-pulse]="orderService.newOrdersCount() > 0">
+                {{ orderService.activeOrdersCount() }}
+              </span>
+            }
+          </button>
+
+          <!-- Sound Alert Toggle -->
+          <button
+            class="btn-header-sound"
+            (click)="toggleSound()"
+            [title]="orderService.soundEnabled() ? 'Sound On (Click to Mute)' : 'Sound Muted (Click to Unmute)'"
+          >
+            <app-icon [name]="orderService.soundEnabled() ? 'volume-2' : 'volume-x'" [size]="16" />
+          </button>
+
+          <!-- Settings Button -->
           <button
             class="btn-header-settings"
-            (click)="activeTab.set(activeTab() === 'security' ? 'dishes' : 'security')"
+            (click)="activeTab.set(activeTab() === 'security' ? 'orders' : 'security')"
             [class.active]="activeTab() === 'security'"
             title="Settings & PIN"
           >
             <app-icon name="settings" [size]="16" />
           </button>
+
+          <!-- Logout Button -->
           <button class="btn-logout" (click)="onLogout()" title="Logout Admin">
             <app-icon name="unlock" [size]="16" />
             <span class="btn-text-desktop">Logout</span>
@@ -54,7 +83,7 @@
 
             <h2 class="login-heading">Owner & Kitchen Login</h2>
             <p class="login-subtext">
-              Enter your secure admin PIN to manage menu dishes, prices, and kitchen operations.
+              Enter your secure admin PIN to view live orders, manage dishes, prices, and kitchen operations.
             </p>
 
             <form class="login-form" (ngSubmit)="onLogin()">
@@ -113,30 +142,52 @@
 
         <!-- Quick Metrics Bar -->
         <div class="admin-stats-strip">
-          <div class="stat-card">
+          <!-- Active Orders Metric -->
+          <div
+            class="stat-card orders-card"
+            [class.has-new]="orderService.newOrdersCount() > 0"
+            (click)="activeTab.set('orders')"
+          >
+            <div class="stat-top-line">
+              <span class="stat-num">{{ orderService.activeOrdersCount() }}</span>
+              @if (orderService.newOrdersCount() > 0) {
+                <span class="new-dot-pulse">NEW ({{ orderService.newOrdersCount() }})</span>
+              }
+            </div>
+            <span class="stat-label">Active Orders</span>
+          </div>
+
+          <div class="stat-card" (click)="activeTab.set('dishes')">
             <span class="stat-num">{{ totalCount() }}</span>
             <span class="stat-label">Total Dishes</span>
           </div>
-          <div class="stat-card in-stock">
+
+          <div class="stat-card in-stock" (click)="activeTab.set('dishes')">
             <span class="stat-num">{{ inStockCount() }}</span>
             <span class="stat-label">In Stock (Available)</span>
           </div>
-          <div class="stat-card not-in-stock">
+
+          <div class="stat-card not-in-stock" (click)="activeTab.set('dishes')">
             <span class="stat-num">{{ soldOutCount() }}</span>
             <span class="stat-label">Not in Stock</span>
-          </div>
-          <div class="stat-card cloud">
-            <span class="stat-mode">
-              {{ adminService.cloudConfig() ? 'Cloud Synced' : 'Local Storage' }}
-            </span>
-            <span class="stat-label">
-              {{ adminService.lastSyncTime() ? 'Last Sync: ' + adminService.lastSyncTime() : 'Ready for Cloud' }}
-            </span>
           </div>
         </div>
 
         <!-- Desktop Navigation Tabs (Hidden on Mobile) -->
         <nav class="admin-desktop-tabs">
+          <button
+            class="tab-btn"
+            [class.active]="activeTab() === 'orders'"
+            (click)="activeTab.set('orders')"
+          >
+            <app-icon name="bell" [size]="18" />
+            <span>Live Orders</span>
+            @if (orderService.activeOrdersCount() > 0) {
+              <span class="tab-badge" [class.badge-new]="orderService.newOrdersCount() > 0">
+                {{ orderService.activeOrdersCount() }}
+              </span>
+            }
+          </button>
           <button
             class="tab-btn"
             [class.active]="activeTab() === 'dishes'"
@@ -171,7 +222,259 @@
           </button>
         </nav>
 
-        <!-- TAB 1: DISHES & MENU -->
+        <!-- ==========================================================================
+             TAB 0: LIVE KITCHEN ORDERS (KDS)
+             ========================================================================== -->
+        @if (activeTab() === 'orders') {
+          <div class="tab-content orders-tab">
+            <!-- Orders Toolbar -->
+            <div class="orders-toolbar">
+              <!-- Filter Pills -->
+              <div class="order-filter-pills">
+                <button
+                  class="filter-pill"
+                  [class.active]="orderService.statusFilter() === 'all'"
+                  (click)="setOrderFilter('all')"
+                >
+                  All ({{ orderService.orders().length }})
+                </button>
+                <button
+                  class="filter-pill new"
+                  [class.active]="orderService.statusFilter() === 'new'"
+                  (click)="setOrderFilter('new')"
+                >
+                  <span class="dot yellow"></span>
+                  New ({{ orderService.newOrdersCount() }})
+                </button>
+                <button
+                  class="filter-pill preparing"
+                  [class.active]="orderService.statusFilter() === 'preparing'"
+                  (click)="setOrderFilter('preparing')"
+                >
+                  <span class="dot blue"></span>
+                  Cooking ({{ orderService.preparingCount() }})
+                </button>
+                <button
+                  class="filter-pill out"
+                  [class.active]="orderService.statusFilter() === 'out_for_delivery'"
+                  (click)="setOrderFilter('out_for_delivery')"
+                >
+                  <span class="dot purple"></span>
+                  Out ({{ orderService.outForDeliveryCount() }})
+                </button>
+                <button
+                  class="filter-pill delivered"
+                  [class.active]="orderService.statusFilter() === 'delivered'"
+                  (click)="setOrderFilter('delivered')"
+                >
+                  <span class="dot green"></span>
+                  Delivered ({{ orderService.deliveredCount() }})
+                </button>
+              </div>
+
+              <!-- Right actions: Refresh & Live status -->
+              <div class="order-toolbar-actions">
+                <button
+                  class="btn-refresh-orders"
+                  (click)="refreshOrders()"
+                  [disabled]="orderService.isFetching()"
+                  title="Refresh Orders"
+                >
+                  <app-icon name="refresh-cw" [size]="14" />
+                  <span>{{ orderService.isFetching() ? 'Syncing...' : 'Refresh' }}</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Orders List or Empty State -->
+            @if (orderService.filteredOrders().length === 0) {
+              <div class="no-orders-box">
+                <div class="no-orders-icon">
+                  <app-icon name="bell" [size]="38" />
+                </div>
+                <h3>No Orders In This View</h3>
+                <p>
+                  {{ orderService.orders().length === 0
+                    ? 'Whenever customers place an order on the website, it will immediately appear here with customer details, items, and address!'
+                    : 'No orders match the selected filter category.' }}
+                </p>
+              </div>
+            } @else {
+              <div class="orders-grid">
+                @for (order of orderService.filteredOrders(); track order.orderId) {
+                  <div class="order-card" [ngClass]="'status-' + order.status">
+                    <!-- Card Top Header -->
+                    <div class="order-card-header">
+                      <div class="order-id-block">
+                        <strong class="order-id">#{{ order.orderId }}</strong>
+                        <span class="order-time">{{ getRelativeTime(order.createdAt) }}</span>
+                      </div>
+
+                      <!-- Status Pill -->
+                      <div class="order-status-badge" [ngClass]="order.status">
+                        <span class="status-pulse-dot"></span>
+                        <span class="status-label-text">
+                          {{
+                            order.status === 'new' ? 'New Order' :
+                            order.status === 'preparing' ? 'Cooking' :
+                            order.status === 'out_for_delivery' ? 'Out for Delivery' :
+                            order.status === 'delivered' ? 'Delivered' : 'Cancelled'
+                          }}
+                        </span>
+                      </div>
+                    </div>
+
+                    <!-- Customer Details -->
+                    <div class="order-customer-box">
+                      <div class="cust-name-row">
+                        <div class="cust-name-line">
+                          <app-icon name="user" [size]="15" />
+                          <strong class="cust-name">{{ order.customerName }}</strong>
+                        </div>
+
+                        <!-- Quick Call & WhatsApp Buttons -->
+                        <div class="cust-quick-actions">
+                          <a
+                            [href]="'tel:+91' + order.mobileNumber"
+                            class="btn-quick-call"
+                            title="Call Customer"
+                          >
+                            <app-icon name="phone" [size]="13" />
+                            <span>Call</span>
+                          </a>
+                          <a
+                            [href]="getCustomerWhatsAppUrl(order)"
+                            target="_blank"
+                            rel="noopener"
+                            class="btn-quick-wa"
+                            title="WhatsApp Customer"
+                          >
+                            <app-icon name="whatsapp" [size]="13" />
+                            <span>WhatsApp</span>
+                          </a>
+                        </div>
+                      </div>
+
+                      <!-- Address & GPS -->
+                      <div class="cust-address-line">
+                        <app-icon name="map-pin" [size]="14" />
+                        <div class="address-text">
+                          <span>{{ order.flatNumber }}, {{ order.areaLocality }}</span>
+                          @if (order.landmark) {
+                            <span class="landmark-sub">• Landmark: {{ order.landmark }}</span>
+                          }
+                          @if (order.googleMapsUrl) {
+                            <a [href]="order.googleMapsUrl" target="_blank" rel="noopener" class="gps-link">
+                              📍 Open in Google Maps
+                            </a>
+                          }
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Ordered Items List -->
+                    <div class="order-items-box">
+                      <div class="items-heading">Ordered Items ({{ order.items.length }}):</div>
+                      <div class="items-list">
+                        @for (item of order.items; track item.dishId) {
+                          <div class="item-line">
+                            <span class="item-qty-name">
+                              <span class="qty-pill">{{ item.quantity }}×</span>
+                              <span class="item-name">{{ item.name }}</span>
+                            </span>
+                            <span class="item-price">{{ item.total | inr }}</span>
+                          </div>
+                        }
+                      </div>
+                    </div>
+
+                    <!-- Bill & Payment Mode -->
+                    <div class="order-bill-row">
+                      <div class="bill-payment-mode">
+                        @if (order.paymentMethod === 'upi') {
+                          <span class="payment-chip upi">
+                            💳 Online UPI
+                            @if (order.upiTransactionId) {
+                              <span class="utr-code">({{ order.upiTransactionId }})</span>
+                            }
+                          </span>
+                        } @else {
+                          <span class="payment-chip cod">💵 Cash on Delivery</span>
+                        }
+                        @if (order.deliveryCharge > 0) {
+                          <span class="deliv-charge-tag">+{{ order.deliveryCharge | inr }} Delivery</span>
+                        }
+                      </div>
+
+                      <div class="bill-total-block">
+                        <span class="bill-total-label">Total:</span>
+                        <strong class="bill-total-amount">{{ order.total | inr }}</strong>
+                      </div>
+                    </div>
+
+                    <!-- Kitchen Action Buttons -->
+                    <div class="order-actions-footer">
+                      @if (order.status === 'new') {
+                        <button
+                          class="btn-step-action start-cooking"
+                          (click)="updateOrderStatus(order.orderId, 'preparing')"
+                        >
+                          <app-icon name="chef-hat" [size]="16" />
+                          <span>Accept & Start Cooking</span>
+                        </button>
+                        <button
+                          class="btn-cancel-order"
+                          (click)="updateOrderStatus(order.orderId, 'cancelled')"
+                          title="Cancel Order"
+                        >
+                          <app-icon name="x" [size]="14" />
+                          <span>Cancel</span>
+                        </button>
+                      } @else if (order.status === 'preparing') {
+                        <button
+                          class="btn-step-action out-delivery"
+                          (click)="updateOrderStatus(order.orderId, 'out_for_delivery')"
+                        >
+                          <app-icon name="motorcycle" [size]="16" />
+                          <span>Dispatch (Out for Delivery)</span>
+                        </button>
+                      } @else if (order.status === 'out_for_delivery') {
+                        <button
+                          class="btn-step-action mark-delivered"
+                          (click)="updateOrderStatus(order.orderId, 'delivered')"
+                        >
+                          <app-icon name="check" [size]="16" />
+                          <span>Mark Delivered</span>
+                        </button>
+                      } @else if (order.status === 'delivered') {
+                        <div class="delivered-complete-tag">
+                          <app-icon name="check" [size]="14" />
+                          <span>Delivered Successfully</span>
+                        </div>
+                      } @else if (order.status === 'cancelled') {
+                        <div class="cancelled-tag">
+                          <span>Order Cancelled</span>
+                        </div>
+                      }
+
+                      <button
+                        class="btn-delete-order"
+                        (click)="deleteOrder(order)"
+                        title="Delete Order"
+                      >
+                        <app-icon name="trash-2" [size]="14" />
+                      </button>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        }
+
+        <!-- ==========================================================================
+             TAB 1: DISHES & MENU
+             ========================================================================== -->
         @if (activeTab() === 'dishes') {
           <div class="tab-content dishes-tab">
             <!-- Action / Filter Toolbar -->
@@ -379,7 +682,9 @@
           </div>
         }
 
-        <!-- TAB 2: KITCHEN CONTROLS & TIMINGS -->
+        <!-- ==========================================================================
+             TAB 2: KITCHEN CONTROLS & TIMINGS
+             ========================================================================== -->
         @if (activeTab() === 'kitchen') {
           <div class="tab-content kitchen-tab">
             <div class="admin-card">
@@ -455,7 +760,9 @@
           </div>
         }
 
-        <!-- TAB 3: FREE CLOUD DATABASE (FIREBASE) -->
+        <!-- ==========================================================================
+             TAB 3: FREE CLOUD DATABASE (FIREBASE)
+             ========================================================================== -->
         @if (activeTab() === 'cloud') {
           <div class="tab-content cloud-tab">
             <div class="admin-card">
@@ -571,7 +878,9 @@
           </div>
         }
 
-        <!-- TAB 4: ADMIN SECURITY & SETTINGS -->
+        <!-- ==========================================================================
+             TAB 4: ADMIN SECURITY & SETTINGS
+             ========================================================================== -->
         @if (activeTab() === 'security') {
           <div class="tab-content security-tab">
             <!-- Change PIN Card -->
@@ -630,14 +939,31 @@
           </div>
         }
 
-        <!-- Mobile Bottom Navigation Bar (Fixed at bottom on phones < 768px) -->
+        <!-- ==========================================================================
+             MOBILE BOTTOM NAVIGATION BAR (< 768px)
+             ========================================================================== -->
         <nav class="mobile-bottom-nav mobile-only">
+          <button
+            class="nav-tab-item"
+            [class.active]="activeTab() === 'orders'"
+            (click)="activeTab.set('orders')"
+          >
+            <div class="nav-icon-wrap">
+              <app-icon name="bell" [size]="20" />
+              @if (orderService.activeOrdersCount() > 0) {
+                <span class="nav-badge" [class.badge-pulse]="orderService.newOrdersCount() > 0">
+                  {{ orderService.activeOrdersCount() }}
+                </span>
+              }
+            </div>
+            <span>Orders</span>
+          </button>
           <button
             class="nav-tab-item"
             [class.active]="activeTab() === 'dishes'"
             (click)="activeTab.set('dishes')"
           >
-            <app-icon name="utensils" [size]="22" />
+            <app-icon name="utensils" [size]="20" />
             <span>Dishes</span>
           </button>
           <button
@@ -645,7 +971,7 @@
             [class.active]="activeTab() === 'kitchen'"
             (click)="activeTab.set('kitchen')"
           >
-            <app-icon name="chef-hat" [size]="22" />
+            <app-icon name="chef-hat" [size]="20" />
             <span>Kitchen</span>
           </button>
         </nav>
