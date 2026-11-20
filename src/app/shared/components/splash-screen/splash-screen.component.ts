@@ -9,220 +9,140 @@ import { IconComponent } from '../icon/icon.component';
   template: `
     @if (isVisible()) {
       <div
-        class="splash-overlay"
-        [class.fade-out]="isFadingOut()"
+        class="swiggy-splash"
+        [class.exit-fade]="isFadingOut()"
         (click)="dismiss()"
         role="dialog"
         aria-label="Welcome to The Bite Zone Bidar"
       >
-        <!-- Background Ambient Glows -->
-        <div class="ambient-glow top-left"></div>
-        <div class="ambient-glow bottom-right"></div>
-        <div class="ambient-pattern"></div>
-
-        <!-- Central Branding Container -->
-        <div class="splash-content">
-          <!-- Animated Logo Emblem -->
-          <div class="logo-emblem-wrap">
-            <div class="glowing-ring outer"></div>
-            <div class="glowing-ring middle"></div>
-            <div class="emblem-core">
-              <div class="emblem-icons">
-                <app-icon name="chef-hat" [size]="36" extraClass="chef-icon" />
-                <div class="cutlery-row">
-                  <app-icon name="utensils" [size]="18" />
-                  <span class="emblem-tag">TBZB</span>
-                  <app-icon name="flame" [size]="18" extraClass="flame-icon" />
-                </div>
+        <!-- Center Logo & Branding -->
+        <div class="splash-card">
+          <!-- Animated Brand Emblem -->
+          <div class="emblem-container">
+            <div class="emblem-glow"></div>
+            <div class="emblem-badge">
+              <app-icon name="chef-hat" [size]="42" extraClass="chef-hat-icon" />
+              <div class="emblem-mid-row">
+                <app-icon name="utensils" [size]="16" />
+                <span class="emblem-text">TBZB</span>
+                <app-icon name="flame" [size]="16" extraClass="flame-icon" />
               </div>
             </div>
           </div>
 
-          <!-- Typography -->
-          <div class="brand-text-wrap">
-            <h1 class="brand-title">THE BITE ZONE</h1>
-            <div class="city-pill">
-              <span class="star-accent">★</span>
-              <span class="city-name">BIDAR</span>
-              <span class="star-accent">★</span>
-            </div>
-            <p class="brand-tagline">Rolls • Biryani • Delicacies</p>
-            <div class="badge-delivery">
-              <app-icon name="delivery-scooter" [size]="16" />
-              <span>Doorstep Delivery Across Bidar</span>
-            </div>
+          <!-- Brand Title & Badges -->
+          <h1 class="brand-name">THE BITE ZONE</h1>
+          <div class="city-pill">
+            <span class="star">★</span>
+            <span class="city-title">BIDAR</span>
+            <span class="star">★</span>
+          </div>
+          <p class="brand-tagline">Fresh Rolls • Handi Biryani • Delicacies</p>
+
+          <!-- Swiggy-style Sleek Progress Bar -->
+          <div class="progress-bar-wrap">
+            <div class="progress-bar-inner"></div>
           </div>
 
-          <!-- Loading Shimmer Bar -->
-          <div class="loader-section">
-            <div class="shimmer-track">
-              <div class="shimmer-bar"></div>
-            </div>
-            <div class="loader-status">
-              <span class="pulse-dot"></span>
-              <span class="status-text">Fresh & Hot Taste Loading...</span>
-            </div>
+          <div class="delivery-perk">
+            <app-icon name="delivery-scooter" [size]="14" />
+            <span>Delivering Fresh & Hot Across Bidar</span>
           </div>
         </div>
 
-        <!-- Bottom Signature -->
-        <div class="splash-footer">
-          <span>Crafted with passion in Bidar • 100% Halal</span>
+        <!-- Minimalist Bottom Signature -->
+        <div class="splash-bottom">
+          <span>100% Halal • Quality Guaranteed</span>
         </div>
       </div>
     }
   `,
   styles: [`
-    .splash-overlay {
+    .swiggy-splash {
       position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      width: 100%;
-      height: 100%;
-      background: radial-gradient(circle at 50% 35%, #0F472B 0%, #082818 55%, #04140C 100%);
-      z-index: 999999;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      background-color: #0B2F1D;
+      background: radial-gradient(circle at 50% 40%, #104C2E 0%, #0B2F1D 60%, #061D12 100%);
+      z-index: 9999999;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       padding: 24px;
       overflow: hidden;
-      transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1), transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: opacity 0.45s cubic-bezier(0.16, 1, 0.3, 1), transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
       user-select: none;
       -webkit-user-select: none;
 
-      &.fade-out {
+      &.exit-fade {
         opacity: 0;
-        transform: scale(1.04);
+        transform: scale(1.05);
         pointer-events: none;
       }
     }
 
-    /* Ambient atmospheric lighting */
-    .ambient-glow {
-      position: absolute;
-      width: 320px;
-      height: 320px;
-      border-radius: 50%;
-      filter: blur(80px);
-      opacity: 0.25;
-      pointer-events: none;
-
-      &.top-left {
-        top: -60px;
-        left: -60px;
-        background: #10B981;
-      }
-
-      &.bottom-right {
-        bottom: -60px;
-        right: -60px;
-        background: #F59E0B;
-      }
-    }
-
-    .ambient-pattern {
-      position: absolute;
-      inset: 0;
-      background-image: radial-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px);
-      background-size: 24px 24px;
-      pointer-events: none;
-      opacity: 0.6;
-    }
-
-    .splash-content {
-      position: relative;
-      z-index: 2;
+    .splash-card {
       display: flex;
       flex-direction: column;
       align-items: center;
       text-align: center;
-      max-width: 360px;
-      width: 100%;
-      animation: contentSlideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      animation: cardEntrance 0.65s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
 
-    @keyframes contentSlideUp {
-      from {
+    @keyframes cardEntrance {
+      0% {
         opacity: 0;
-        transform: translateY(24px) scale(0.96);
+        transform: scale(0.88) translateY(16px);
       }
-      to {
+      100% {
         opacity: 1;
-        transform: translateY(0) scale(1);
+        transform: scale(1) translateY(0);
       }
     }
 
-    /* Logo Emblem with concentric glowing rings */
-    .logo-emblem-wrap {
+    /* Emblem styling */
+    .emblem-container {
       position: relative;
-      width: 120px;
-      height: 120px;
+      width: 110px;
+      height: 110px;
       display: flex;
       align-items: center;
       justify-content: center;
-      margin-bottom: 24px;
+      margin-bottom: 20px;
     }
 
-    .glowing-ring {
+    .emblem-glow {
       position: absolute;
+      inset: -10px;
       border-radius: 50%;
-      pointer-events: none;
-
-      &.outer {
-        width: 120px;
-        height: 120px;
-        border: 2px dashed rgba(245, 158, 11, 0.45);
-        animation: rotateSlow 24s linear infinite;
-      }
-
-      &.middle {
-        width: 104px;
-        height: 104px;
-        border: 1.5px solid rgba(16, 185, 129, 0.4);
-        box-shadow: 0 0 24px rgba(16, 185, 129, 0.3);
-        animation: pulseRing 3s ease-in-out infinite;
-      }
+      background: radial-gradient(circle, rgba(245, 158, 11, 0.35) 0%, rgba(16, 185, 129, 0) 70%);
+      filter: blur(14px);
+      animation: glowBreath 2.4s ease-in-out infinite alternate;
     }
 
-    @keyframes rotateSlow {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(360deg); }
+    @keyframes glowBreath {
+      0% { transform: scale(0.9); opacity: 0.6; }
+      100% { transform: scale(1.15); opacity: 1; }
     }
 
-    @keyframes pulseRing {
-      0%, 100% {
-        transform: scale(1);
-        opacity: 0.5;
-      }
-      50% {
-        transform: scale(1.05);
-        opacity: 0.9;
-      }
-    }
-
-    .emblem-core {
-      width: 88px;
-      height: 88px;
+    .emblem-badge {
+      position: relative;
+      width: 96px;
+      height: 96px;
       border-radius: 50%;
-      background: linear-gradient(145deg, #165335, #0B291A);
-      border: 2px solid #F59E0B;
-      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4), inset 0 2px 6px rgba(255, 255, 255, 0.2);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .emblem-icons {
+      background: linear-gradient(145deg, #165335, #082415);
+      border: 2.5px solid #F59E0B;
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45), inset 0 2px 4px rgba(255, 255, 255, 0.2);
       display: flex;
       flex-direction: column;
       align-items: center;
+      justify-content: center;
       gap: 3px;
-      color: #FBBF24;
+      color: #F59E0B;
 
-      :deep(.chef-icon) {
+      :deep(.chef-hat-icon) {
         color: #FFFFFF;
         filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4));
       }
@@ -232,168 +152,117 @@ import { IconComponent } from '../icon/icon.component';
       }
     }
 
-    .cutlery-row {
+    .emblem-mid-row {
       display: flex;
       align-items: center;
       gap: 4px;
-      font-size: 11px;
-      font-weight: 800;
-      letter-spacing: 0.8px;
-      color: #FFFFFF;
-    }
+      color: #FDE68A;
 
-    .emblem-tag {
-      background: #F59E0B;
-      color: #0B291A;
-      font-size: 9px;
-      font-weight: 900;
-      padding: 1px 4px;
-      border-radius: 4px;
-      line-height: 1;
+      .emblem-text {
+        font-size: 10px;
+        font-weight: 900;
+        background: #F59E0B;
+        color: #0B291A;
+        padding: 1px 5px;
+        border-radius: 4px;
+        letter-spacing: 0.5px;
+        line-height: 1;
+      }
     }
 
     /* Brand titles */
-    .brand-title {
+    .brand-name {
       font-family: 'Playfair Display', Georgia, serif;
-      font-size: 28px;
+      font-size: 26px;
       font-weight: 800;
       letter-spacing: 2.5px;
-      background: linear-gradient(135deg, #FFFFFF 20%, #FDE68A 60%, #F59E0B 100%);
+      background: linear-gradient(135deg, #FFFFFF 30%, #FDE68A 70%, #F59E0B 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       margin: 0;
       line-height: 1.2;
-      text-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
     }
 
     .city-pill {
       display: inline-flex;
       align-items: center;
-      gap: 8px;
-      margin: 8px 0 12px;
-      padding: 4px 16px;
+      gap: 6px;
+      margin: 8px 0 10px;
+      padding: 3px 14px;
       background: rgba(245, 158, 11, 0.12);
       border: 1px solid rgba(245, 158, 11, 0.35);
-      border-radius: 20px;
-      backdrop-filter: blur(8px);
+      border-radius: 100px;
 
-      .city-name {
+      .city-title {
         color: #FBBF24;
-        font-size: 13px;
+        font-size: 12px;
         font-weight: 800;
-        letter-spacing: 3px;
+        letter-spacing: 2px;
       }
 
-      .star-accent {
+      .star {
         color: #F59E0B;
-        font-size: 10px;
+        font-size: 9px;
       }
     }
 
     .brand-tagline {
       font-size: 13px;
-      font-weight: 500;
-      color: #D1FAE5;
-      letter-spacing: 0.5px;
-      margin: 0 0 14px;
-      opacity: 0.9;
-    }
-
-    .badge-delivery {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 6px 14px;
-      background: rgba(255, 255, 255, 0.07);
-      border-radius: 100px;
       color: #A7F3D0;
-      font-size: 11.5px;
-      font-weight: 600;
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      margin: 0 0 24px;
+      font-weight: 500;
+      letter-spacing: 0.3px;
     }
 
-    /* Loader section */
-    .loader-section {
-      width: 100%;
-      margin-top: 36px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .shimmer-track {
-      width: 200px;
-      height: 4px;
-      background: rgba(255, 255, 255, 0.12);
-      border-radius: 4px;
+    /* Swiggy-style Sleek Progress Line */
+    .progress-bar-wrap {
+      width: 170px;
+      height: 3.5px;
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 10px;
       overflow: hidden;
+      margin-bottom: 16px;
       position: relative;
     }
 
-    .shimmer-bar {
+    .progress-bar-inner {
       position: absolute;
       top: 0;
-      bottom: 0;
       left: 0;
-      width: 45%;
-      background: linear-gradient(90deg, #10B981, #F59E0B, #10B981);
-      border-radius: 4px;
-      animation: shimmerLoop 1.4s ease-in-out infinite;
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #10B981, #F59E0B);
+      border-radius: 10px;
+      box-shadow: 0 0 10px #10B981;
+      animation: progressGlide 1.35s cubic-bezier(0.4, 0, 0.2, 1) forwards;
     }
 
-    @keyframes shimmerLoop {
-      0% {
-        left: -45%;
-        width: 30%;
-      }
-      50% {
-        width: 60%;
-      }
-      100% {
-        left: 100%;
-        width: 30%;
-      }
+    @keyframes progressGlide {
+      0% { width: 0%; }
+      40% { width: 55%; }
+      80% { width: 85%; }
+      100% { width: 100%; }
     }
 
-    .loader-status {
-      display: flex;
+    .delivery-perk {
+      display: inline-flex;
       align-items: center;
-      gap: 8px;
-
-      .pulse-dot {
-        width: 7px;
-        height: 7px;
-        border-radius: 50%;
-        background: #10B981;
-        box-shadow: 0 0 10px #10B981;
-        animation: pulseDot 1.2s infinite;
-      }
-
-      .status-text {
-        font-size: 11px;
-        color: #9CA3AF;
-        letter-spacing: 0.4px;
-        font-weight: 500;
-      }
-    }
-
-    @keyframes pulseDot {
-      0%, 100% { transform: scale(1); opacity: 0.7; }
-      50% { transform: scale(1.3); opacity: 1; }
-    }
-
-    /* Splash Footer */
-    .splash-footer {
-      position: absolute;
-      bottom: 24px;
-      left: 0;
-      right: 0;
-      text-align: center;
+      gap: 6px;
       font-size: 11px;
-      color: rgba(255, 255, 255, 0.4);
-      letter-spacing: 0.6px;
-      z-index: 2;
+      color: rgba(255, 255, 255, 0.65);
+      background: rgba(255, 255, 255, 0.05);
+      padding: 4px 12px;
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    /* Minimal Bottom Tag */
+    .splash-bottom {
+      position: absolute;
+      bottom: 22px;
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.35);
+      letter-spacing: 0.5px;
     }
   `]
 })
@@ -403,29 +272,19 @@ export class SplashScreenComponent implements OnInit, OnDestroy {
   private timer: any = null;
 
   ngOnInit(): void {
-    // Only show once per session in standard browser, or always for native app feel
-    const isColdLaunch = !sessionStorage.getItem('tbzb_splash_shown');
-    
-    // Smooth timer: 1.8s for beautiful branded intro
-    const duration = isColdLaunch ? 1800 : 900;
-    
+    // Smooth 1.45s timing for authentic Swiggy/Zomato launch feeling
     this.timer = setTimeout(() => {
       this.dismiss();
-    }, duration);
+    }, 1450);
   }
 
   dismiss(): void {
     if (this.isFadingOut()) return;
     this.isFadingOut.set(true);
-    
-    // Save to session so internal navigations don't re-trigger splash
-    try {
-      sessionStorage.setItem('tbzb_splash_shown', 'true');
-    } catch (e) {}
 
     setTimeout(() => {
       this.isVisible.set(false);
-    }, 480);
+    }, 450);
   }
 
   ngOnDestroy(): void {

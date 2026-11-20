@@ -586,3 +586,4 @@ export class MobileCartComponent {
     this.cartService.openCheckout();
   }
 }
+

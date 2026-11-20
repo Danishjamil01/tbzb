@@ -5,7 +5,6 @@ import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { PlatformService } from '../../../core/services/platform.service';
 import { BusinessStatusService } from '../../../core/services/business-status.service';
 import { MenuService } from '../../../core/services/menu.service';
-import { AdminService } from '../../../core/services/admin.service';
 
 @Component({
   selector: 'app-mobile-header',
@@ -15,17 +14,23 @@ import { AdminService } from '../../../core/services/admin.service';
     <header class="mobile-header">
       <!-- Top Delivery & Info Row -->
       <div class="top-row">
-        <!-- Location details -->
-        <div class="location-box" (click)="openHoursModal.emit()">
-          <div class="pin-icon-wrap">
+        <!-- Real Fetched GPS Location -->
+        <div class="location-box" (click)="onLocationClick()" title="Tap to refresh real location">
+          <div class="pin-icon-wrap" [class.pulse]="platformService.isLocating()">
             <app-icon name="map-pin" [size]="18" />
           </div>
           <div class="location-text">
             <div class="loc-headline">
-              <span class="city-title">Bidar, Karnataka</span>
-              <app-icon name="chevron-down" [size]="14" />
+              <span class="city-title">{{ platformService.userLocationName() }}</span>
+              <app-icon name="chevron-down" [size]="13" />
             </div>
-            <span class="loc-sub">Doorstep Delivery • 15-25 Mins</span>
+            <span class="loc-sub">
+              @if (platformService.isLocating()) {
+                Locating your real area...
+              } @else {
+                Doorstep Delivery • 15–25 Mins
+              }
+            </span>
           </div>
         </div>
 
@@ -34,28 +39,8 @@ import { AdminService } from '../../../core/services/admin.service';
           <!-- Kitchen Status Pill -->
           <div class="status-pill" [class.open]="status().isOpen" (click)="openHoursModal.emit()">
             <span class="dot"></span>
-            <span class="status-label">{{ status().isOpen ? 'Open' : 'Closed' }}</span>
+            <span class="status-label">{{ status().isOpen ? 'Open Now' : 'Closed' }}</span>
           </div>
-
-          <!-- Website Switcher Button -->
-          <button
-            class="action-btn web-toggle-btn"
-            (click)="platformService.toggleViewMode()"
-            title="Switch to Website View"
-            aria-label="Switch to Website View"
-          >
-            <span class="toggle-text">Web View</span>
-          </button>
-
-          <!-- Admin Quick Key -->
-          <button
-            class="action-btn admin-btn"
-            (click)="onAdminClick()"
-            title="Kitchen Admin"
-            aria-label="Kitchen Admin"
-          >
-            <app-icon name="lock" [size]="16" />
-          </button>
         </div>
       </div>
 
@@ -99,23 +84,24 @@ import { AdminService } from '../../../core/services/admin.service';
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 10px;
+      gap: 12px;
       margin-bottom: 10px;
     }
 
     .location-box {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 9px;
       cursor: pointer;
       user-select: none;
       flex: 1;
       min-width: 0;
+      padding: 2px 0;
     }
 
     .pin-icon-wrap {
-      width: 32px;
-      height: 32px;
+      width: 34px;
+      height: 34px;
       border-radius: 50%;
       background: rgba(245, 158, 11, 0.15);
       border: 1px solid rgba(245, 158, 11, 0.35);
@@ -124,6 +110,15 @@ import { AdminService } from '../../../core/services/admin.service';
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
+
+      &.pulse {
+        animation: pinPulse 1.2s infinite;
+      }
+    }
+
+    @keyframes pinPulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); box-shadow: 0 0 10px #F59E0B; }
     }
 
     .location-text {
@@ -138,7 +133,7 @@ import { AdminService } from '../../../core/services/admin.service';
       gap: 4px;
 
       .city-title {
-        font-size: 13.5px;
+        font-size: 14px;
         font-weight: 700;
         color: #FFFFFF;
         white-space: nowrap;
@@ -171,11 +166,11 @@ import { AdminService } from '../../../core/services/admin.service';
       display: flex;
       align-items: center;
       gap: 5px;
-      padding: 4px 8px;
+      padding: 5px 10px;
       background: rgba(239, 68, 68, 0.2);
       border: 1px solid rgba(239, 68, 68, 0.4);
       border-radius: 12px;
-      font-size: 10px;
+      font-size: 11px;
       font-weight: 700;
       color: #FCA5A5;
       cursor: pointer;
@@ -197,36 +192,6 @@ import { AdminService } from '../../../core/services/admin.service';
           box-shadow: 0 0 6px #10B981;
         }
       }
-    }
-
-    .action-btn {
-      height: 30px;
-      border-radius: 15px;
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      background: rgba(255, 255, 255, 0.08);
-      color: #FFFFFF;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: all 0.15s ease;
-
-      &:hover {
-        background: rgba(255, 255, 255, 0.16);
-      }
-    }
-
-    .web-toggle-btn {
-      padding: 0 9px;
-      font-size: 10.5px;
-      font-weight: 600;
-      color: #FDE68A;
-      border-color: rgba(245, 158, 11, 0.3);
-    }
-
-    .admin-btn {
-      width: 30px;
-      color: #D1D5DB;
     }
 
     /* Search Bar Row */
@@ -282,12 +247,15 @@ export class MobileHeaderComponent {
   platformService = inject(PlatformService);
   private statusService = inject(BusinessStatusService);
   private menuService = inject(MenuService);
-  private adminService = inject(AdminService);
 
   @Output() openHoursModal = new EventEmitter<void>();
 
   status = this.statusService.status;
   searchQuery: string = '';
+
+  onLocationClick(): void {
+    this.platformService.fetchRealLocation();
+  }
 
   onSearchChange(val: string): void {
     this.menuService.searchQuery.set(val);
@@ -299,9 +267,5 @@ export class MobileHeaderComponent {
   clearSearch(): void {
     this.searchQuery = '';
     this.menuService.searchQuery.set('');
-  }
-
-  onAdminClick(): void {
-    this.adminService.openAdmin();
   }
 }

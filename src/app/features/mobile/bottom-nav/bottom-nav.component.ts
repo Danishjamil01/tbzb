@@ -224,3 +224,4 @@ export class BottomNavComponent {
     this.platformService.setTab(tab);
   }
 }
+

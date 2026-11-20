@@ -2,23 +2,27 @@ import { Injectable, signal, computed } from '@angular/core';
 import { Capacitor } from '@capacitor/core';
 
 export type AppTab = 'home' | 'menu' | 'orders' | 'cart' | 'more';
-export type ViewMode = 'auto' | 'app' | 'web';
 
 @Injectable({
   providedIn: 'root'
 })
 export class PlatformService {
-  // Is running natively inside Capacitor (Android/iOS)
+  // Is running natively inside Capacitor (Android/iOS App)
   readonly isNative = signal<boolean>(Capacitor.isNativePlatform());
 
   // Is installed as a Standalone PWA on mobile device
   readonly isStandalonePwa = signal<boolean>(this.checkStandalone());
 
-  // Mobile viewport detection
-  readonly isMobileScreen = signal<boolean>(this.checkMobileScreen());
+  // Optional query param override for testing (e.g. ?mode=app)
+  private readonly hasAppParam = typeof window !== 'undefined' && window.location.search.includes('mode=app');
 
-  // User manual view preference: 'auto' | 'app' | 'web'
-  readonly userViewPreference = signal<ViewMode>(this.loadViewPreference());
+  // Strict Rule:
+  // Native APK/AAB App -> Opens App Layout ONLY.
+  // Installed PWA Standalone -> Opens App Layout ONLY.
+  // Any Web Browser (Mobile browser or Desktop browser) -> Opens Website Layout ONLY!
+  readonly isAppMode = computed<boolean>(() => {
+    return this.isNative() || this.isStandalonePwa() || this.hasAppParam;
+  });
 
   // Active Mobile App Tab
   readonly activeTab = signal<AppTab>('home');
@@ -26,27 +30,16 @@ export class PlatformService {
   // Customer's last placed order for live tracking in App
   readonly customerActiveOrder = signal<any>(this.loadCustomerOrder());
 
-  // Computed: whether to render the dedicated App Layout vs. the Website Layout
-  readonly isAppMode = computed<boolean>(() => {
-    const pref = this.userViewPreference();
-    if (pref === 'app') return true;
-    if (pref === 'web') return false;
-
-    // In 'auto' mode:
-    // Native mobile app or standalone PWA -> always App Mode!
-    if (this.isNative() || this.isStandalonePwa()) {
-      return true;
-    }
-    // Mobile screen (phone) -> default to App Mode for best mobile experience!
-    return this.isMobileScreen();
-  });
+  // Real GPS Location state
+  readonly userLocationName = signal<string>('Detecting location...');
+  readonly userCoordinates = signal<{ lat: number; lng: number } | null>(null);
+  readonly isLocating = signal<boolean>(false);
 
   constructor() {
-    if (typeof window !== 'undefined') {
-      window.addEventListener('resize', () => {
-        this.isMobileScreen.set(this.checkMobileScreen());
-      });
+    // Automatically fetch real device location on startup
+    this.fetchRealLocation();
 
+    if (typeof window !== 'undefined') {
       // Listen for storage changes (e.g. order placed in checkout modal)
       window.addEventListener('storage', (e) => {
         if (e.key === 'tbzb_customer_last_order') {
@@ -56,28 +49,77 @@ export class PlatformService {
     }
   }
 
+  fetchRealLocation(): void {
+    if (typeof navigator === 'undefined' || !navigator.geolocation) {
+      this.userLocationName.set('Bidar, Karnataka');
+      return;
+    }
+
+    this.isLocating.set(true);
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        this.userCoordinates.set({ lat: latitude, lng: longitude });
+
+        try {
+          // OpenStreetMap Nominatim reverse geocode (Free & accurate)
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 6000);
+
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`,
+            {
+              signal: controller.signal,
+              headers: { 'Accept-Language': 'en' }
+            }
+          );
+          clearTimeout(timeoutId);
+
+          if (res.ok) {
+            const data = await res.json();
+            const addr = data.address || {};
+
+            // Prioritize local neighborhood/area
+            const locality =
+              addr.suburb ||
+              addr.neighbourhood ||
+              addr.residential ||
+              addr.road ||
+              addr.village ||
+              addr.town ||
+              addr.city_district ||
+              'Bidar';
+
+            const city = addr.city || addr.town || addr.county || 'Bidar';
+            this.userLocationName.set(`${locality}, ${city}`);
+          } else {
+            this.userLocationName.set('Bidar, Karnataka');
+          }
+        } catch (e) {
+          // Fallback on timeout or network error
+          this.userLocationName.set('Bidar, Karnataka');
+        } finally {
+          this.isLocating.set(false);
+        }
+      },
+      (error) => {
+        this.isLocating.set(false);
+        this.userLocationName.set('Bidar, Karnataka');
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 9000,
+        maximumAge: 60000
+      }
+    );
+  }
+
   private checkStandalone(): boolean {
     if (typeof window === 'undefined') return false;
     return (
       (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) ||
       (window.navigator as any)?.standalone === true
     );
-  }
-
-  private checkMobileScreen(): boolean {
-    if (typeof window === 'undefined') return false;
-    return window.innerWidth <= 768;
-  }
-
-  private loadViewPreference(): ViewMode {
-    if (typeof window === 'undefined') return 'auto';
-    try {
-      const saved = localStorage.getItem('tbzb_view_mode') as ViewMode;
-      if (saved === 'app' || saved === 'web' || saved === 'auto') {
-        return saved;
-      }
-    } catch (e) {}
-    return 'auto';
   }
 
   private loadCustomerOrder(): any {
@@ -103,19 +145,5 @@ export class PlatformService {
     if (typeof window !== 'undefined') {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
-  }
-
-  setViewPreference(pref: ViewMode): void {
-    this.userViewPreference.set(pref);
-    try {
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('tbzb_view_mode', pref);
-      }
-    } catch (e) {}
-  }
-
-  toggleViewMode(): void {
-    const current = this.isAppMode();
-    this.setViewPreference(current ? 'web' : 'app');
   }
 }

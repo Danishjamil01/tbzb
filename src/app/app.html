@@ -3,85 +3,75 @@
 
 <!-- 2. Dual Experience Shell -->
 @if (platformService.isAppMode()) {
-  <!-- ============================================ -->
-  <!-- VIEW A: DEDICATED MOBILE APP EXPERIENCE     -->
-  <!-- ============================================ -->
-  <div class="mobile-app-layout">
-    <!-- Top Mobile App Header -->
-    <app-mobile-header (openHoursModal)="openHoursModal()"></app-mobile-header>
+<!-- ============================================ -->
+<!-- VIEW A: DEDICATED MOBILE APP EXPERIENCE     -->
+<!-- ============================================ -->
+<div class="mobile-app-layout">
+  <!-- Top Mobile App Header -->
+  <app-mobile-header (openHoursModal)="openHoursModal()"></app-mobile-header>
 
-    <!-- Main Content Tab Switcher -->
-    <main class="mobile-app-main" id="mobile-main">
-      @switch (platformService.activeTab()) {
-        @case ('home') {
-          <app-mobile-home></app-mobile-home>
-        }
-        @case ('menu') {
-          <app-mobile-menu></app-mobile-menu>
-        }
-        @case ('orders') {
-          <app-mobile-orders></app-mobile-orders>
-        }
-        @case ('cart') {
-          <app-mobile-cart></app-mobile-cart>
-        }
-        @case ('more') {
-          <app-mobile-more></app-mobile-more>
-        }
-      }
-    </main>
+  <!-- Main Content Tab Switcher -->
+  <main class="mobile-app-main" id="mobile-main">
+    @switch (platformService.activeTab()) {
+    @case ('home') {
+    <app-mobile-home></app-mobile-home>
+    }
+    @case ('menu') {
+    <app-mobile-menu></app-mobile-menu>
+    }
+    @case ('orders') {
+    <app-mobile-orders></app-mobile-orders>
+    }
+    @case ('cart') {
+    <app-mobile-cart></app-mobile-cart>
+    }
+    @case ('more') {
+    <app-mobile-more></app-mobile-more>
+    }
+    }
+  </main>
 
-    <!-- Bottom Navigation Tabs -->
-    <app-bottom-nav></app-bottom-nav>
-  </div>
+  <!-- Bottom Navigation Tabs -->
+  <app-bottom-nav></app-bottom-nav>
+</div>
 } @else {
-  <!-- ============================================ -->
-  <!-- VIEW B: FULL WEBSITE EXPERIENCE (DESKTOP)   -->
-  <!-- ============================================ -->
-  <div class="website-layout">
-    <!-- Desktop Header -->
-    <app-header (openHoursModal)="openHoursModal()"></app-header>
+<!-- ============================================ -->
+<!-- VIEW B: FULL WEBSITE EXPERIENCE (DESKTOP)   -->
+<!-- ============================================ -->
+<div class="website-layout">
+  <!-- Desktop Header -->
+  <app-header (openHoursModal)="openHoursModal()"></app-header>
 
-    <!-- Desktop Switcher Notice Bar -->
-    <div class="desktop-mode-banner">
-      <div class="mode-banner-content">
-        <span>✨ You are viewing the Desktop Website layout.</span>
-        <button class="btn-toggle-app-mode" (click)="platformService.toggleViewMode()">
-          📱 Switch to Mobile App View
-        </button>
-      </div>
-    </div>
+  <!-- Main Website Content -->
+  <main class="main-content" id="main-content">
+    <!-- Hero Section -->
+    <app-hero></app-hero>
 
-    <!-- Main Website Content -->
-    <main class="main-content" id="main-content">
-      <!-- Hero Section -->
-      <app-hero></app-hero>
+    <!-- Category Quick Navigation -->
+    <app-category-nav></app-category-nav>
 
-      <!-- Category Quick Navigation -->
-      <app-category-nav></app-category-nav>
+    <!-- Popular Delicacies Section -->
+    <app-featured></app-featured>
 
-      <!-- Popular Delicacies Section -->
-      <app-featured></app-featured>
+    <!-- Special Signature Product: Kunafa Jar -->
+    <app-kunafa-spotlight></app-kunafa-spotlight>
 
-      <!-- Special Signature Product: Kunafa Jar -->
-      <app-kunafa-spotlight></app-kunafa-spotlight>
+    <!-- Full Interactive Food Menu -->
+    <app-menu></app-menu>
 
-      <!-- Full Interactive Food Menu -->
-      <app-menu></app-menu>
+    <!-- About TBZB Cloud Kitchen -->
+    <app-about></app-about>
 
-      <!-- About TBZB Cloud Kitchen -->
-      <app-about></app-about>
+    <!-- Contact, Location & Delivery Info -->
+    <app-contact></app-contact>
+  </main>
 
-      <!-- Contact, Location & Delivery Info -->
-      <app-contact></app-contact>
-    </main>
+  <!-- Footer -->
+  <app-footer></app-footer>
 
-    <!-- Footer -->
-    <app-footer></app-footer>
-
-    <!-- Floating WhatsApp on Web View -->
-    <app-floating-whatsapp></app-floating-whatsapp>
-  </div>
+  <!-- Floating WhatsApp on Web View -->
+  <app-floating-whatsapp></app-floating-whatsapp>
+</div>
 }
 
 <!-- ============================================ -->

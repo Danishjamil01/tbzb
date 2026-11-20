@@ -73,3 +73,4 @@ Generate-Splash 'android/app/src/main/res/drawable-land-hdpi/splash.png' 800 480
 Generate-Splash 'android/app/src/main/res/drawable-land-xhdpi/splash.png' 1280 720
 Generate-Splash 'android/app/src/main/res/drawable-land-xxhdpi/splash.png' 1600 960
 Generate-Splash 'android/app/src/main/res/drawable-land-xxxhdpi/splash.png' 1920 1280
+

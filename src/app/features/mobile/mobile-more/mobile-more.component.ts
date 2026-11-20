@@ -74,20 +74,6 @@ import { BUSINESS_CONFIG } from '../../../core/config/business.config';
 
       <!-- Settings & Tools Section -->
       <div class="menu-options-list">
-        <!-- Switch to Website View -->
-        <button class="option-row-btn" (click)="platformService.toggleViewMode()">
-          <div class="opt-left">
-            <div class="opt-icon-box web">
-              <app-icon name="sparkles" [size]="16" />
-            </div>
-            <div class="opt-texts">
-              <span class="opt-title">Switch to Website View</span>
-              <span class="opt-desc">View the full desktop landing page layout</span>
-            </div>
-          </div>
-          <app-icon name="chevron-right" [size]="16" extraClass="chevron" />
-        </button>
-
         <!-- Kitchen Admin Portal -->
         <button class="option-row-btn" (click)="openAdminModal()">
           <div class="opt-left">

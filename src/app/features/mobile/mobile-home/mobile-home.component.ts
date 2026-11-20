@@ -13,6 +13,22 @@ import { MenuItem, FoodCategory } from '../../../core/models/menu.model';
   imports: [CommonModule, IconComponent, InrPipe],
   template: `
     <div class="mobile-home-container">
+      <!-- Real-time GPS Location Bar -->
+      <div class="home-location-strip" (click)="platformService.fetchRealLocation()">
+        <div class="loc-strip-left">
+          <div class="loc-pin-icon" [class.pulse]="platformService.isLocating()">
+            <app-icon name="map-pin" [size]="16" />
+          </div>
+          <div class="loc-strip-meta">
+            <span class="loc-strip-label">Delivering to:</span>
+            <strong class="loc-strip-title">{{ platformService.userLocationName() }}</strong>
+          </div>
+        </div>
+        <button class="btn-refresh-gps" title="Refresh GPS Location" aria-label="Refresh Location">
+          <app-icon name="refresh-cw" [size]="13" [extraClass]="platformService.isLocating() ? 'spin' : ''" />
+        </button>
+      </div>
+
       <!-- Active Order Tracker Alert (If order is active) -->
       @if (activeOrder(); as ord) {
         <div class="active-order-pill" (click)="platformService.setTab('orders')">
@@ -174,6 +190,92 @@ import { MenuItem, FoodCategory } from '../../../core/models/menu.model';
       gap: 18px;
       background: #F9FAFB;
       min-height: calc(100vh - 120px);
+    }
+
+    /* Live GPS Location Strip */
+    .home-location-strip {
+      background: #FFFFFF;
+      border: 1px solid #E5E7EB;
+      border-radius: 14px;
+      padding: 9px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+      cursor: pointer;
+    }
+
+    .loc-strip-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+      flex: 1;
+    }
+
+    .loc-pin-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: rgba(15, 71, 43, 0.1);
+      color: #0F472B;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+
+      &.pulse {
+        animation: locPulse 1.2s infinite;
+      }
+    }
+
+    @keyframes locPulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.12); background: rgba(245, 158, 11, 0.2); color: #D97706; }
+    }
+
+    .loc-strip-meta {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    .loc-strip-label {
+      font-size: 10px;
+      color: #6B7280;
+      font-weight: 500;
+    }
+
+    .loc-strip-title {
+      font-size: 13px;
+      color: #111827;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-weight: 700;
+    }
+
+    .btn-refresh-gps {
+      border: none;
+      background: #F3F4F6;
+      color: #4B5563;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      flex-shrink: 0;
+
+      :deep(.spin) {
+        animation: spinAnim 1s linear infinite;
+      }
+    }
+
+    @keyframes spinAnim {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
     }
 
     /* Active order floating alert */
