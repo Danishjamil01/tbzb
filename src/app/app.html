@@ -1,42 +1,97 @@
-<div class="app-layout">
-  <!-- Global Header -->
-  <app-header (openHoursModal)="openHoursModal()"></app-header>
+<!-- 1. Beautiful Clean Splash Screen (Animated brand introduction) -->
+<app-splash-screen></app-splash-screen>
 
-  <!-- Main Website Content -->
-  <main class="main-content" id="main-content">
-    <!-- Hero Section -->
-    <app-hero></app-hero>
+<!-- 2. Dual Experience Shell -->
+@if (platformService.isAppMode()) {
+  <!-- ============================================ -->
+  <!-- VIEW A: DEDICATED MOBILE APP EXPERIENCE     -->
+  <!-- ============================================ -->
+  <div class="mobile-app-layout">
+    <!-- Top Mobile App Header -->
+    <app-mobile-header (openHoursModal)="openHoursModal()"></app-mobile-header>
 
-    <!-- Category Quick Navigation -->
-    <app-category-nav></app-category-nav>
+    <!-- Main Content Tab Switcher -->
+    <main class="mobile-app-main" id="mobile-main">
+      @switch (platformService.activeTab()) {
+        @case ('home') {
+          <app-mobile-home></app-mobile-home>
+        }
+        @case ('menu') {
+          <app-mobile-menu></app-mobile-menu>
+        }
+        @case ('orders') {
+          <app-mobile-orders></app-mobile-orders>
+        }
+        @case ('cart') {
+          <app-mobile-cart></app-mobile-cart>
+        }
+        @case ('more') {
+          <app-mobile-more></app-mobile-more>
+        }
+      }
+    </main>
 
-    <!-- Popular Delicacies Section -->
-    <app-featured></app-featured>
+    <!-- Bottom Navigation Tabs -->
+    <app-bottom-nav></app-bottom-nav>
+  </div>
+} @else {
+  <!-- ============================================ -->
+  <!-- VIEW B: FULL WEBSITE EXPERIENCE (DESKTOP)   -->
+  <!-- ============================================ -->
+  <div class="website-layout">
+    <!-- Desktop Header -->
+    <app-header (openHoursModal)="openHoursModal()"></app-header>
 
-    <!-- Special Signature Product: Kunafa Jar -->
-    <app-kunafa-spotlight></app-kunafa-spotlight>
+    <!-- Desktop Switcher Notice Bar -->
+    <div class="desktop-mode-banner">
+      <div class="mode-banner-content">
+        <span>✨ You are viewing the Desktop Website layout.</span>
+        <button class="btn-toggle-app-mode" (click)="platformService.toggleViewMode()">
+          📱 Switch to Mobile App View
+        </button>
+      </div>
+    </div>
 
-    <!-- Full Interactive Food Menu -->
-    <app-menu></app-menu>
+    <!-- Main Website Content -->
+    <main class="main-content" id="main-content">
+      <!-- Hero Section -->
+      <app-hero></app-hero>
 
-    <!-- About TBZB Cloud Kitchen -->
-    <app-about></app-about>
+      <!-- Category Quick Navigation -->
+      <app-category-nav></app-category-nav>
 
-    <!-- Contact, Location & Delivery Info -->
-    <app-contact></app-contact>
-  </main>
+      <!-- Popular Delicacies Section -->
+      <app-featured></app-featured>
 
-  <!-- Footer -->
-  <app-footer></app-footer>
+      <!-- Special Signature Product: Kunafa Jar -->
+      <app-kunafa-spotlight></app-kunafa-spotlight>
 
-  <!-- Interactive Drawers, Modals & Floating Utilities -->
-  <app-cart-drawer></app-cart-drawer>
-  <app-food-modal></app-food-modal>
-  <app-checkout-modal></app-checkout-modal>
-  <app-order-confirmation-modal></app-order-confirmation-modal>
-  <app-hours-modal></app-hours-modal>
-  <app-floating-whatsapp></app-floating-whatsapp>
-  <app-toast-container></app-toast-container>
-  <app-all-dishes></app-all-dishes>
-  <app-admin></app-admin>
-</div>
+      <!-- Full Interactive Food Menu -->
+      <app-menu></app-menu>
+
+      <!-- About TBZB Cloud Kitchen -->
+      <app-about></app-about>
+
+      <!-- Contact, Location & Delivery Info -->
+      <app-contact></app-contact>
+    </main>
+
+    <!-- Footer -->
+    <app-footer></app-footer>
+
+    <!-- Floating WhatsApp on Web View -->
+    <app-floating-whatsapp></app-floating-whatsapp>
+  </div>
+}
+
+<!-- ============================================ -->
+<!-- COMMON MODALS & OVERLAYS (APP & WEB)        -->
+<!-- ============================================ -->
+<app-cart-drawer></app-cart-drawer>
+<app-food-modal></app-food-modal>
+<app-checkout-modal></app-checkout-modal>
+<app-order-confirmation-modal></app-order-confirmation-modal>
+<app-hours-modal></app-hours-modal>
+<app-toast-container></app-toast-container>
+<app-all-dishes></app-all-dishes>
+<app-admin></app-admin>

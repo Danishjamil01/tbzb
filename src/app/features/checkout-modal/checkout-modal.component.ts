@@ -8,6 +8,7 @@ import { InrPipe } from '../../shared/pipes/inr.pipe';
 import { IconComponent } from '../../shared/components/icon/icon.component';
 import { PlacedOrder, KitchenOrder } from '../../core/models/order.model';
 import { OrderService } from '../../core/services/order.service';
+import { PlatformService } from '../../core/services/platform.service';
 
 @Component({
   selector: 'app-checkout-modal',
@@ -990,6 +991,7 @@ export class CheckoutModalComponent {
   private statusService = inject(BusinessStatusService);
   private toastService = inject(ToastService);
   private orderService = inject(OrderService);
+  private platformService = inject(PlatformService);
 
   status = this.statusService.status;
   config = this.statusService.config;
@@ -1244,6 +1246,7 @@ _Order placed via TBZB Online Website • Delivery strictly within Bidar_`;
       status: 'new'
     };
     this.orderService.createOrder(kitchenOrder);
+    this.platformService.setCustomerOrder(kitchenOrder);
 
     // Open WhatsApp
     window.open(whatsAppUrl, '_blank', 'noopener,noreferrer');

@@ -115,6 +115,21 @@ export class CartService {
     this.saveToStorage(updated);
   }
 
+  updateQuantity(itemId: string, quantity: number): void {
+    if (quantity <= 0) {
+      this.removeItem(itemId);
+      return;
+    }
+    const current = this.itemsSignal();
+    const index = current.findIndex(ci => ci.menuItem.id === itemId);
+    if (index > -1) {
+      const updated = [...current];
+      updated[index] = { ...updated[index], quantity };
+      this.itemsSignal.set(updated);
+      this.saveToStorage(updated);
+    }
+  }
+
   getItemQuantity(itemId: string): number {
     const item = this.itemsSignal().find(ci => ci.menuItem.id === itemId);
     return item ? item.quantity : 0;

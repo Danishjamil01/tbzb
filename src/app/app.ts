@@ -1,4 +1,4 @@
-import { Component, ViewChild } from '@angular/core';
+import { Component, ViewChild, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HeaderComponent } from './features/header/header.component';
 import { HeroComponent } from './features/hero/hero.component';
@@ -18,12 +18,30 @@ import { FloatingWhatsappComponent } from './features/floating-whatsapp/floating
 import { AllDishesComponent } from './features/all-dishes/all-dishes.component';
 import { AdminComponent } from './features/admin/admin.component';
 import { ToastContainerComponent } from './shared/components/toast/toast.component';
+import { SplashScreenComponent } from './shared/components/splash-screen/splash-screen.component';
+import { MobileHeaderComponent } from './features/mobile/mobile-header/mobile-header.component';
+import { BottomNavComponent } from './features/mobile/bottom-nav/bottom-nav.component';
+import { MobileHomeComponent } from './features/mobile/mobile-home/mobile-home.component';
+import { MobileMenuComponent } from './features/mobile/mobile-menu/mobile-menu.component';
+import { MobileOrdersComponent } from './features/mobile/mobile-orders/mobile-orders.component';
+import { MobileCartComponent } from './features/mobile/mobile-cart/mobile-cart.component';
+import { MobileMoreComponent } from './features/mobile/mobile-more/mobile-more.component';
+import { PlatformService } from './core/services/platform.service';
+import { AdminService } from './core/services/admin.service';
 
 @Component({
   selector: 'app-root',
   standalone: true,
   imports: [
     CommonModule,
+    SplashScreenComponent,
+    MobileHeaderComponent,
+    BottomNavComponent,
+    MobileHomeComponent,
+    MobileMenuComponent,
+    MobileOrdersComponent,
+    MobileCartComponent,
+    MobileMoreComponent,
     HeaderComponent,
     HeroComponent,
     CategoryNavComponent,
@@ -47,11 +65,18 @@ import { ToastContainerComponent } from './shared/components/toast/toast.compone
   styleUrl: './app.scss'
 })
 export class App {
+  platformService = inject(PlatformService);
+  private adminService = inject(AdminService);
+
   @ViewChild(HoursModalComponent) hoursModal!: HoursModalComponent;
 
   openHoursModal(): void {
     if (this.hoursModal) {
       this.hoursModal.open();
     }
+  }
+
+  openAdminModal(): void {
+    this.adminService.openAdmin();
   }
 }
