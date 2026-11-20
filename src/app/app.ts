@@ -1,4 +1,4 @@
-import { Component, ViewChild, inject } from '@angular/core';
+import { Component, ViewChild, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HeaderComponent } from './features/header/header.component';
 import { HeroComponent } from './features/hero/hero.component';
@@ -19,6 +19,7 @@ import { AllDishesComponent } from './features/all-dishes/all-dishes.component';
 import { AdminComponent } from './features/admin/admin.component';
 import { ToastContainerComponent } from './shared/components/toast/toast.component';
 import { SplashScreenComponent } from './shared/components/splash-screen/splash-screen.component';
+import { LocationScreenComponent } from './features/mobile/location-screen/location-screen.component';
 import { MobileHeaderComponent } from './features/mobile/mobile-header/mobile-header.component';
 import { BottomNavComponent } from './features/mobile/bottom-nav/bottom-nav.component';
 import { MobileHomeComponent } from './features/mobile/mobile-home/mobile-home.component';
@@ -35,6 +36,7 @@ import { AdminService } from './core/services/admin.service';
   imports: [
     CommonModule,
     SplashScreenComponent,
+    LocationScreenComponent,
     MobileHeaderComponent,
     BottomNavComponent,
     MobileHomeComponent,
@@ -68,7 +70,22 @@ export class App {
   platformService = inject(PlatformService);
   private adminService = inject(AdminService);
 
+  showSplash = signal<boolean>(true);
+  showLocationScreen = signal<boolean>(false);
+
   @ViewChild(HoursModalComponent) hoursModal!: HoursModalComponent;
+
+  onSplashFinished(): void {
+    this.showSplash.set(false);
+    // In App mode: trigger the "Find Your Location" screen right after splash!
+    if (this.platformService.isAppMode()) {
+      this.showLocationScreen.set(true);
+    }
+  }
+
+  onLocationConfirmed(location: string): void {
+    this.showLocationScreen.set(false);
+  }
 
   openHoursModal(): void {
     if (this.hoursModal) {
