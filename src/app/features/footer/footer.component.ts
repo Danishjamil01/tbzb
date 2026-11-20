@@ -111,6 +111,12 @@ import { IconComponent } from '../../shared/components/icon/icon.component';
                 <span>Contact & Delivery</span>
               </a>
             </li>
+            <li>
+              <a href="/privacy-policy" target="_blank" rel="noopener noreferrer">
+                <app-icon name="shield-check" [size]="16" class="link-icon" />
+                <span>Privacy Policy</span>
+              </a>
+            </li>
           </ul>
         </div>
 
@@ -219,10 +225,15 @@ import { IconComponent } from '../../shared/components/icon/icon.component';
               <span class="statement-white">Taste the Difference... </span>
               <strong class="statement-gold">Only at TBZB</strong>
             </div>
-            <button class="footer-admin-btn" (click)="adminService.openAdmin()" title="Owner Kitchen Dashboard">
-              <app-icon name="lock" [size]="12" />
-              <span>Kitchen Admin</span>
-            </button>
+            <div class="footer-bottom-actions">
+              <a href="/privacy-policy" target="_blank" class="footer-privacy-link" title="Privacy Policy">
+                Privacy Policy
+              </a>
+              <button class="footer-admin-btn" (click)="adminService.openAdmin()" title="Owner Kitchen Dashboard">
+                <app-icon name="lock" [size]="12" />
+                <span>Kitchen Admin</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -605,6 +616,26 @@ import { IconComponent } from '../../shared/components/icon/icon.component';
       .statement-gold {
         color: #FFC82C;
         font-weight: 850;
+      }
+    }
+
+    .footer-bottom-actions {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 4px;
+    }
+
+    .footer-privacy-link {
+      color: rgba(255, 255, 255, 0.75);
+      font-size: 11.5px;
+      font-weight: 500;
+      text-decoration: none;
+      transition: color 0.15s ease;
+
+      &:hover {
+        color: #F7D51D;
+        text-decoration: underline;
       }
     }
 

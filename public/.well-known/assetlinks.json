@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.thebitezone.bidar",
+      "sha256_cert_fingerprints": [
+        "14:6D:E9:7F:0F:52:EA:CB:25:4B:E0:4E:02:7B:59:71:B8:B7:EC:77:A3:CF:42:6D:F3:9C:60:EC:21:50:01:F3"
+      ]
+    }
+  }
+]

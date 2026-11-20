@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json.schemastore.org/web-manifest-combined.json",
+  "id": "com.thebitezone.bidar",
+  "name": "The Bite Zone Bidar",
+  "short_name": "TBZB",
+  "description": "Order authentic Biryani, Kathi Rolls, Dosas, Desserts and Shakes from The Bite Zone Bidar cloud kitchen.",
+  "start_url": "/?source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0B0B0B",
+  "theme_color": "#0F472B",
+  "lang": "en",
+  "dir": "ltr",
+  "categories": ["food", "shopping", "lifestyle"],
+  "icons": [
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-maskable-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-maskable-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Food Menu",
+      "short_name": "Menu",
+      "description": "View 42 delicious dishes",
+      "url": "/#menu",
+      "icons": [{ "src": "/icons/icon-192x192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Bestsellers",
+      "short_name": "Popular",
+      "description": "Explore popular delicacies",
+      "url": "/#featured",
+      "icons": [{ "src": "/icons/icon-192x192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Signature Kunafa",
+      "short_name": "Kunafa",
+      "description": "Crispy dessert jar",
+      "url": "/#kunafa",
+      "icons": [{ "src": "/icons/icon-192x192.png", "sizes": "192x192" }]
+    }
+  ]
+}
