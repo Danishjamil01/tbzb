@@ -1171,13 +1171,20 @@
 
         <!-- Toggles -->
         <div class="modal-toggles-row">
-          <label class="toggle-checkbox">
+          <label class="toggle-checkbox" [class.checked]="editingDish.isAvailable">
             <input type="checkbox" [(ngModel)]="editingDish.isAvailable" />
-            <span>In Stock (Available for ordering)</span>
+            <div class="toggle-text-col">
+              <span class="toggle-title">In Stock (Available for ordering)</span>
+              <span class="toggle-desc">Uncheck if this item is sold out or not available</span>
+            </div>
           </label>
-          <label class="toggle-checkbox">
+
+          <label class="toggle-checkbox" [class.checked]="editingDish.featured">
             <input type="checkbox" [(ngModel)]="editingDish.featured" />
-            <span>Highlight in "Popular Dishes"</span>
+            <div class="toggle-text-col">
+              <span class="toggle-title">Highlight in "Popular Dishes"</span>
+              <span class="toggle-desc">Showcase this dish in the bestsellers section</span>
+            </div>
           </label>
         </div>
 

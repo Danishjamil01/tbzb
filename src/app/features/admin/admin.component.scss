@@ -2228,6 +2228,7 @@
   max-width: 500px;
   max-height: 85vh;
   background: #FFFFFF;
+  color: #1F2937;
   border-radius: 16px;
   overflow-y: auto;
   z-index: 100001;
@@ -2510,16 +2511,63 @@
 .modal-toggles-row {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 8px 0;
+  gap: 10px;
+  padding: 6px 0;
 
   .toggle-checkbox {
     display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 13px;
-    font-weight: 600;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: #F9F7F2;
+    border: 1.5px solid #E5E0D5;
     cursor: pointer;
+    user-select: none;
+    transition: all 0.15s ease;
+
+    &:hover {
+      background: #F3EFE8;
+      border-color: #D6D0C4;
+    }
+
+    &.checked {
+      background: #F0FDF4;
+      border-color: #86EFAC;
+
+      .toggle-title {
+        color: #15803D;
+      }
+    }
+
+    input[type="checkbox"] {
+      width: 19px;
+      height: 19px;
+      margin-top: 2px;
+      accent-color: #0F472B;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .toggle-text-col {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .toggle-title {
+      font-size: 13.5px;
+      font-weight: 750;
+      color: #111827;
+      line-height: 1.3;
+    }
+
+    .toggle-desc {
+      font-size: 11.5px;
+      font-weight: 500;
+      color: #6B7280;
+      line-height: 1.3;
+    }
   }
 }
 
