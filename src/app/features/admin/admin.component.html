@@ -5,16 +5,13 @@
     <header class="admin-header">
       <div class="header-left">
         <button class="btn-back-store" (click)="onClose()" title="Return to Customer Store">
-          <app-icon name="arrow-left" [size]="18" />
-          <span class="btn-back-text">Back to Store</span>
+          <app-icon name="arrow-left" [size]="16" />
+          <span class="btn-back-text">Store</span>
         </button>
 
         <div class="admin-brand">
-          <div class="brand-badge">TBZB</div>
-          <div class="brand-meta">
-            <h1 class="admin-title">Kitchen Portal</h1>
-            <span class="admin-sub">The Bite Zone • Bidar</span>
-          </div>
+          <span class="brand-badge">TBZB</span>
+          <span class="admin-title">Kitchen Portal</span>
         </div>
       </div>
 
@@ -22,39 +19,13 @@
         <!-- Live Kitchen Status Pill -->
         <div class="status-pill" [ngClass]="statusService.status().isOpen ? 'open' : 'closed'">
           <span class="dot"></span>
-          <span class="status-label">{{ statusService.status().statusText }}</span>
+          <span class="status-label">{{ statusService.status().isOpen ? 'Open' : 'Closed' }}</span>
         </div>
 
         @if (adminService.isAuthenticated()) {
-          <!-- Quick Orders Pill in Header -->
+          <!-- Settings Icon Button -->
           <button
-            class="btn-header-orders"
-            (click)="activeTab.set('orders')"
-            [class.active]="activeTab() === 'orders'"
-            [class.has-new]="orderService.newOrdersCount() > 0"
-            title="Live Kitchen Orders"
-          >
-            <app-icon name="bell" [size]="15" />
-            <span class="header-orders-label">Orders</span>
-            @if (orderService.activeOrdersCount() > 0) {
-              <span class="orders-pill-badge" [class.badge-pulse]="orderService.newOrdersCount() > 0">
-                {{ orderService.activeOrdersCount() }}
-              </span>
-            }
-          </button>
-
-          <!-- Sound Alert Toggle -->
-          <button
-            class="btn-header-sound"
-            (click)="toggleSound()"
-            [title]="orderService.soundEnabled() ? 'Sound On (Click to Mute)' : 'Sound Muted (Click to Unmute)'"
-          >
-            <app-icon [name]="orderService.soundEnabled() ? 'volume-2' : 'volume-x'" [size]="16" />
-          </button>
-
-          <!-- Settings Button -->
-          <button
-            class="btn-header-settings"
+            class="btn-header-icon"
             (click)="activeTab.set(activeTab() === 'security' ? 'orders' : 'security')"
             [class.active]="activeTab() === 'security'"
             title="Settings & PIN"
@@ -62,10 +33,9 @@
             <app-icon name="settings" [size]="16" />
           </button>
 
-          <!-- Logout Button -->
-          <button class="btn-logout" (click)="onLogout()" title="Logout Admin">
+          <!-- Logout Icon Button -->
+          <button class="btn-header-icon logout" (click)="onLogout()" title="Logout Admin">
             <app-icon name="unlock" [size]="16" />
-            <span class="btn-text-desktop">Logout</span>
           </button>
         }
       </div>
@@ -272,8 +242,18 @@
                 </button>
               </div>
 
-              <!-- Right actions: Refresh & Live status -->
+              <!-- Right actions: Refresh & Live status & Sound -->
               <div class="order-toolbar-actions">
+                <button
+                  class="btn-sound-toggle"
+                  (click)="toggleSound()"
+                  [class.muted]="!orderService.soundEnabled()"
+                  title="Toggle Order Chime"
+                >
+                  <app-icon [name]="orderService.soundEnabled() ? 'volume-2' : 'volume-x'" [size]="14" />
+                  <span>{{ orderService.soundEnabled() ? 'Sound ON' : 'Muted' }}</span>
+                </button>
+
                 <button
                   class="btn-refresh-orders"
                   (click)="refreshOrders()"

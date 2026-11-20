@@ -50,42 +50,51 @@
    HEADER
    ========================================================================== */
 .admin-header {
-  height: 64px;
+  height: 60px;
   background: #0F472B;
   color: #FFFFFF;
-  padding: 0 1rem;
+  padding: 0 0.85rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-shrink: 0;
-  border-bottom: 2.5px solid #E5A00D;
-  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.15);
+  border-bottom: 2px solid #E5A00D;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
+  position: relative;
+  z-index: 100;
 
   @media (min-width: 768px) {
     padding: 0 1.5rem;
-    height: 68px;
+    height: 64px;
   }
 }
 
 .header-left {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
+  min-width: 0;
+
+  @media (min-width: 768px) {
+    gap: 12px;
+  }
 }
 
 .btn-back-store {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  background: rgba(255, 255, 255, 0.15);
+  gap: 5px;
+  background: rgba(255, 255, 255, 0.12);
   color: #FFFFFF;
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  padding: 6px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  padding: 5px 10px;
   border-radius: 9999px;
   font-family: var(--font-heading);
-  font-size: 12.5px;
+  font-size: 11.5px;
   font-weight: 700;
   cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
   transition: all 0.15s ease;
 
   &:hover {
@@ -94,8 +103,8 @@
     border-color: #E5A00D;
   }
 
-  @media (max-width: 480px) {
-    padding: 6px 10px;
+  @media (max-width: 375px) {
+    padding: 5px 8px;
 
     .btn-back-text {
       display: none;
@@ -106,7 +115,9 @@
 .admin-brand {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
+  min-width: 0;
+  white-space: nowrap;
 }
 
 .brand-badge {
@@ -114,46 +125,53 @@
   color: #0F472B;
   font-family: var(--font-heading);
   font-weight: 850;
-  font-size: 12px;
-  padding: 3px 7px;
+  font-size: 11px;
+  padding: 3px 6px;
   border-radius: 5px;
+  line-height: 1;
   letter-spacing: 0.5px;
-}
-
-.brand-meta {
-  display: flex;
-  flex-direction: column;
+  flex-shrink: 0;
 }
 
 .admin-title {
   font-family: var(--font-heading);
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 800;
   margin: 0;
-  line-height: 1.1;
+  line-height: 1.2;
   color: #FFFFFF;
-}
+  white-space: nowrap;
 
-.admin-sub {
-  font-size: 10px;
-  color: rgba(255, 255, 255, 0.75);
-  letter-spacing: 0.03em;
+  @media (max-width: 360px) {
+    font-size: 12.5px;
+  }
+
+  @media (min-width: 768px) {
+    font-size: 16px;
+  }
 }
 
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
+  flex-shrink: 0;
+
+  @media (min-width: 768px) {
+    gap: 8px;
+  }
 }
 
 .status-pill {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
+  gap: 5px;
+  padding: 4px 8px;
   border-radius: 9999px;
-  font-size: 11.5px;
-  font-weight: 700;
+  font-size: 11px;
+  font-weight: 750;
+  line-height: 1;
+  white-space: nowrap;
 
   &.open {
     background: rgba(34, 197, 94, 0.2);
@@ -161,10 +179,11 @@
     border: 1px solid rgba(74, 222, 128, 0.4);
 
     .dot {
-      width: 7px;
-      height: 7px;
+      width: 6px;
+      height: 6px;
       border-radius: 50%;
       background: #4ADE80;
+      box-shadow: 0 0 6px #4ADE80;
     }
   }
 
@@ -174,63 +193,15 @@
     border: 1px solid rgba(248, 113, 113, 0.4);
 
     .dot {
-      width: 7px;
-      height: 7px;
+      width: 6px;
+      height: 6px;
       border-radius: 50%;
       background: #F87171;
     }
   }
 }
 
-.btn-header-orders {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  background: rgba(255, 255, 255, 0.15);
-  color: #FFFFFF;
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  padding: 5px 10px;
-  border-radius: 8px;
-  font-family: var(--font-heading);
-  font-size: 12px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.15s ease;
-
-  &:hover, &.active {
-    background: #FFC82C;
-    color: #0F472B;
-    border-color: #FFC82C;
-  }
-
-  &.has-new {
-    border-color: #FFC82C;
-    box-shadow: 0 0 10px rgba(255, 200, 44, 0.4);
-  }
-
-  .header-orders-label {
-    @media (max-width: 480px) {
-      display: none;
-    }
-  }
-
-  .orders-pill-badge {
-    background: #DC2626;
-    color: #FFFFFF;
-    font-size: 10px;
-    font-weight: 850;
-    padding: 1px 6px;
-    border-radius: 9999px;
-
-    &.badge-pulse {
-      background: #FFC82C;
-      color: #0F472B;
-      animation: pulseGlow 1.2s infinite;
-    }
-  }
-}
-
-.btn-header-sound {
+.btn-header-icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -238,27 +209,10 @@
   height: 32px;
   background: rgba(255, 255, 255, 0.12);
   color: #FFFFFF;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.22);
   border-radius: 8px;
   cursor: pointer;
-  transition: all 0.15s ease;
-
-  &:hover {
-    background: rgba(255, 255, 255, 0.22);
-  }
-}
-
-.btn-header-settings {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  background: rgba(255, 255, 255, 0.12);
-  color: #FFFFFF;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 8px;
-  cursor: pointer;
+  flex-shrink: 0;
   transition: all 0.15s ease;
 
   &:hover, &.active {
@@ -266,30 +220,11 @@
     color: #0F472B;
     border-color: #E5A00D;
   }
-}
 
-.btn-logout {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: rgba(255, 255, 255, 0.12);
-  color: #FFFFFF;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  padding: 6px 12px;
-  border-radius: 8px;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.15s ease;
-
-  &:hover {
-    background: rgba(255, 255, 255, 0.2);
-  }
-
-  .btn-text-desktop {
-    @media (max-width: 639px) {
-      display: none;
-    }
+  &.logout:hover {
+    background: #FEE2E2;
+    color: #DC2626;
+    border-color: #FECACA;
   }
 }
 
@@ -1356,6 +1291,35 @@
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.btn-sound-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  background: #DCFCE7;
+  border: 1px solid #86EFAC;
+  color: #15803D;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+
+  &:hover {
+    background: #BBF7D0;
+  }
+
+  &.muted {
+    background: #F3F4F6;
+    border-color: #D1D5DB;
+    color: #6B7280;
+
+    &:hover {
+      background: #E5E7EB;
+    }
+  }
 }
 
 .btn-refresh-orders {
