@@ -1,0 +1,24 @@
+@if (isVisible()) {
+  <div
+    class="tbzb-splash"
+    [class.fade-exit]="isFadingOut()"
+    (click)="dismiss()"
+    role="dialog"
+    aria-label="The Bite Zone Bidar"
+  >
+    <!-- Background Layer with User Mockup Artwork -->
+    <div class="splash-art-bg">
+      <img
+        src="images/splash-screen-bg.jpg"
+        alt="The Bite Zone Bidar"
+        class="splash-mockup-img"
+      />
+    </div>
+
+    <!-- Animated Bottom Spinner over the Green Wave -->
+    <div class="bottom-spinner-wrap">
+      <div class="circular-spinner"></div>
+    </div>
+  </div>
+}
+

@@ -1,0 +1,73 @@
+<nav class="bottom-nav" role="navigation" aria-label="App Navigation">
+  <!-- 1. Home Tab -->
+  <button
+    class="nav-tab-btn"
+    [class.active]="platformService.activeTab() === 'home'"
+    (click)="selectTab('home')"
+    aria-label="Home"
+  >
+    <div class="icon-wrap">
+      <app-icon name="home" [size]="20" />
+    </div>
+    <span class="tab-label">Home</span>
+  </button>
+
+  <!-- 2. Menu Tab -->
+  <button
+    class="nav-tab-btn"
+    [class.active]="platformService.activeTab() === 'menu'"
+    (click)="selectTab('menu')"
+    aria-label="Menu"
+  >
+    <div class="icon-wrap">
+      <app-icon name="utensils" [size]="20" />
+    </div>
+    <span class="tab-label">Menu</span>
+  </button>
+
+  <!-- 3. Orders Tab -->
+  <button
+    class="nav-tab-btn"
+    [class.active]="platformService.activeTab() === 'orders'"
+    (click)="selectTab('orders')"
+    aria-label="Orders"
+  >
+    <div class="icon-wrap">
+      <app-icon name="package" [size]="20" />
+      @if (hasActiveOrder()) {
+        <span class="pulse-active-dot"></span>
+      }
+    </div>
+    <span class="tab-label">Orders</span>
+  </button>
+
+  <!-- 4. Cart Tab -->
+  <button
+    class="nav-tab-btn"
+    [class.active]="platformService.activeTab() === 'cart'"
+    (click)="selectTab('cart')"
+    aria-label="Cart"
+  >
+    <div class="icon-wrap cart-icon-wrap">
+      <app-icon name="shopping-bag" [size]="20" />
+      @if (cartCount() > 0) {
+        <span class="cart-badge">{{ cartCount() }}</span>
+      }
+    </div>
+    <span class="tab-label">Cart</span>
+  </button>
+
+  <!-- 5. More / Profile Tab -->
+  <button
+    class="nav-tab-btn"
+    [class.active]="platformService.activeTab() === 'more'"
+    (click)="selectTab('more')"
+    aria-label="More Options"
+  >
+    <div class="icon-wrap">
+      <app-icon name="more-horizontal" [size]="20" />
+    </div>
+    <span class="tab-label">More</span>
+  </button>
+</nav>
+

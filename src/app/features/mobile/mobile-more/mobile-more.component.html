@@ -1,0 +1,99 @@
+<div class="mobile-more-container">
+  <!-- Profile / Brand Header -->
+  <div class="brand-hero-card">
+    <div class="brand-logo-circle">
+      <app-icon name="chef-hat" [size]="28" />
+    </div>
+    <div class="brand-info">
+      <h2 class="brand-title">The Bite Zone</h2>
+      <span class="brand-city">Bidar, Karnataka</span>
+      <div class="halal-tag">
+        <app-icon name="shield-check" [size]="12" />
+        <span>100% Halal Meat & Fresh Cooking</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Contact Actions -->
+  <div class="contact-actions-grid">
+    <a [href]="'tel:' + config.contact.phone" class="contact-card phone">
+      <div class="icon-circle phone">
+        <app-icon name="phone" [size]="18" />
+      </div>
+      <span class="action-label">Call Kitchen</span>
+      <span class="action-sub">{{ config.contact.phoneFormatted }}</span>
+    </a>
+
+    <a [href]="'https://wa.me/' + config.contact.whatsappNumber" target="_blank" class="contact-card whatsapp">
+      <div class="icon-circle whatsapp">
+        <app-icon name="whatsapp" [size]="18" />
+      </div>
+      <span class="action-label">WhatsApp</span>
+      <span class="action-sub">Chat & Support</span>
+    </a>
+
+    <a [href]="config.location.mapUrl" target="_blank" class="contact-card location">
+      <div class="icon-circle location">
+        <app-icon name="map-pin" [size]="18" />
+      </div>
+      <span class="action-label">Directions</span>
+      <span class="action-sub">Open in Maps</span>
+    </a>
+  </div>
+
+  <!-- Kitchen Timings Card -->
+  <div class="info-card">
+    <div class="info-card-header">
+      <app-icon name="clock" [size]="18" />
+      <h3 class="card-heading">Kitchen Operating Hours</h3>
+    </div>
+    <div class="timings-list">
+      <div class="timing-row">
+        <span class="day-label">Monday – Sunday</span>
+        <span class="time-label">4:00 PM – 12:30 AM</span>
+      </div>
+      <div class="status-summary-line" [class.open]="status().isOpen">
+        <span class="status-dot"></span>
+        <span>Current Status: <strong>{{ status().isOpen ? 'Open & Delivering Now' : 'Closed for Now' }}</strong></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings & Tools Section -->
+  <div class="menu-options-list">
+    <!-- Kitchen Admin Portal -->
+    <button class="option-row-btn" (click)="openAdminModal()">
+      <div class="opt-left">
+        <div class="opt-icon-box admin">
+          <app-icon name="lock" [size]="16" />
+        </div>
+        <div class="opt-texts">
+          <span class="opt-title">Kitchen Admin & Live Orders</span>
+          <span class="opt-desc">Manage menu dishes, prices, and live orders</span>
+        </div>
+      </div>
+      <app-icon name="chevron-right" [size]="16" extraClass="chevron" />
+    </button>
+
+    <!-- Privacy Policy -->
+    <a href="/privacy-policy" target="_blank" class="option-row-btn link-row">
+      <div class="opt-left">
+        <div class="opt-icon-box doc">
+          <app-icon name="info" [size]="16" />
+        </div>
+        <div class="opt-texts">
+          <span class="opt-title">Privacy Policy</span>
+          <span class="opt-desc">Data security, permissions & terms</span>
+        </div>
+      </div>
+      <app-icon name="chevron-right" [size]="16" extraClass="chevron" />
+    </a>
+  </div>
+
+  <!-- App Info Footer -->
+  <div class="more-footer">
+    <p class="app-version">The Bite Zone Bidar App • v1.0.0 (Release 1)</p>
+    <p class="copyright">© 2026 The Bite Zone Bidar. All rights reserved.</p>
+  </div>
+</div>
+

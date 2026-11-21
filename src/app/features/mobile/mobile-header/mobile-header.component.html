@@ -1,0 +1,54 @@
+<header class="mobile-header">
+  <!-- Top Delivery & Info Row -->
+  <div class="top-row">
+    <!-- Real Fetched GPS Location -->
+    <div class="location-box" (click)="onLocationClick()" title="Tap to refresh real location">
+      <div class="pin-icon-wrap" [class.pulse]="platformService.isLocating()">
+        <app-icon name="map-pin" [size]="18" />
+      </div>
+      <div class="location-text">
+        <div class="loc-headline">
+          <span class="city-title">{{ platformService.userLocationName() }}</span>
+          <app-icon name="chevron-down" [size]="13" />
+        </div>
+        <span class="loc-sub">
+          @if (platformService.isLocating()) {
+            Locating your real area...
+          } @else {
+            Doorstep Delivery • 15–25 Mins
+          }
+        </span>
+      </div>
+    </div>
+
+    <!-- Right Quick Actions -->
+    <div class="header-actions">
+      <!-- Kitchen Status Pill -->
+      <div class="status-pill" [class.open]="status().isOpen" (click)="openHoursModal.emit()">
+        <span class="dot"></span>
+        <span class="status-label">{{ status().isOpen ? 'Open Now' : 'Closed' }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Search Bar -->
+  <div class="search-row">
+    <div class="search-input-wrap">
+      <app-icon name="search" [size]="18" extraClass="search-icon" />
+      <input
+        type="text"
+        [(ngModel)]="searchQuery"
+        (ngModelChange)="onSearchChange($event)"
+        placeholder="Search Rolls, Biryani, Starters, Drinks..."
+        class="search-input"
+        aria-label="Search Dishes"
+      />
+      @if (searchQuery) {
+        <button class="clear-btn" (click)="clearSearch()" aria-label="Clear Search">
+          <app-icon name="x" [size]="14" />
+        </button>
+      }
+    </div>
+  </div>
+</header>
+

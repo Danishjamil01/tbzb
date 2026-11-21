@@ -1,0 +1,127 @@
+<div class="mobile-menu-container">
+  <!-- Sticky Category & Filter Header -->
+  <div class="menu-sticky-filters">
+    <!-- Categories Horizontal Scroll -->
+    <div class="category-chips-scroll">
+      @for (cat of menuService.categories; track cat.id) {
+        <button
+          class="cat-chip-btn"
+          [class.active]="menuService.selectedCategory() === cat.id"
+          (click)="selectCategory(cat.id)"
+        >
+          <app-icon [name]="cat.icon" [size]="14" />
+          <span>{{ cat.label }}</span>
+          <span class="count-badge">{{ getCount(cat.id) }}</span>
+        </button>
+      }
+    </div>
+
+    <!-- Diet Type Toggle (Veg / Non-Veg / All) -->
+    <div class="diet-toggles-row">
+      <button
+        class="diet-pill"
+        [class.active]="menuService.selectedDiet() === 'all'"
+        (click)="selectDiet('all')"
+      >
+        All Items
+      </button>
+      <button
+        class="diet-pill veg-pill"
+        [class.active]="menuService.selectedDiet() === 'veg'"
+        (click)="selectDiet('veg')"
+      >
+        <span class="diet-box veg">
+          <span class="inner-dot"></span>
+        </span>
+        <span>Pure Veg</span>
+      </button>
+      <button
+        class="diet-pill non-veg-pill"
+        [class.active]="menuService.selectedDiet() === 'non-veg'"
+        (click)="selectDiet('non-veg')"
+      >
+        <span class="diet-box non-veg">
+          <span class="inner-dot"></span>
+        </span>
+        <span>Non-Veg</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Search query indicator if active -->
+  @if (menuService.searchQuery()) {
+    <div class="search-active-bar">
+      <span>Search: "<strong>{{ menuService.searchQuery() }}</strong>"</span>
+      <button class="clear-search-btn" (click)="clearSearch()">
+        <app-icon name="x" [size]="13" /> Clear
+      </button>
+    </div>
+  }
+
+  <!-- Dish Items List -->
+  <div class="dishes-list">
+    @if (filteredItems().length === 0) {
+      <div class="empty-menu-box">
+        <app-icon name="utensils" [size]="40" />
+        <p class="empty-title">No dishes found</p>
+        <p class="empty-sub">Try changing your filters or search keywords</p>
+        <button class="btn-reset-filters" (click)="resetFilters()">View All Items</button>
+      </div>
+    } @else {
+      @for (item of filteredItems(); track item.id) {
+        <div class="app-menu-card" (click)="openDetail(item)">
+          <!-- Left Info -->
+          <div class="card-left">
+            <div class="diet-and-tag">
+              <div class="diet-dot-badge" [class.veg]="item.dietType === 'veg'" [class.non-veg]="item.dietType === 'non-veg'">
+                <span class="inner-dot"></span>
+              </div>
+              @if (item.tags && item.tags.length > 0) {
+                <span class="badge-tag">{{ item.tags[0] }}</span>
+              }
+              @if (item.featured) {
+                <span class="badge-must-try">★ Must Try</span>
+              }
+            </div>
+
+            <h3 class="dish-title">{{ item.name }}</h3>
+
+            <div class="price-row">
+              <span class="price-val">{{ item.price | inr }}</span>
+              <div class="rating-mini">
+                <app-icon name="star" [size]="10" />
+                <span>4.8</span>
+              </div>
+            </div>
+
+            <p class="dish-desc">{{ item.description }}</p>
+          </div>
+
+          <!-- Right Image & Add Button -->
+          <div class="card-right" (click)="$event.stopPropagation()">
+            <div class="dish-img-box" (click)="openDetail(item)">
+              <img [src]="item.imageUrl" [alt]="item.name" class="dish-img" loading="lazy" />
+            </div>
+
+            <!-- Floating Add Button / Stepper -->
+            <div class="action-btn-container">
+              @if (getItemQuantity(item.id) > 0) {
+                <div class="stepper-box">
+                  <button class="step-btn" (click)="updateQty(item, -1)">-</button>
+                  <span class="step-qty">{{ getItemQuantity(item.id) }}</span>
+                  <button class="step-btn" (click)="updateQty(item, 1)">+</button>
+                </div>
+              } @else {
+                <button class="add-btn" (click)="addToCart(item)">
+                  <span>ADD</span>
+                  <app-icon name="plus" [size]="12" />
+                </button>
+              }
+            </div>
+          </div>
+        </div>
+      }
+    }
+  </div>
+</div>
+

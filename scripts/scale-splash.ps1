@@ -51,3 +51,4 @@ Scale-Splash 'public/images/splash-screen-bg.jpg' 'android/app/src/main/res/draw
 Scale-Splash 'public/images/splash-screen-bg.jpg' 'android/app/src/main/res/drawable-land-xhdpi/splash.png' 1280 720
 Scale-Splash 'public/images/splash-screen-bg.jpg' 'android/app/src/main/res/drawable-land-xxhdpi/splash.png' 1600 960
 Scale-Splash 'public/images/splash-screen-bg.jpg' 'android/app/src/main/res/drawable-land-xxxhdpi/splash.png' 1920 1280
+

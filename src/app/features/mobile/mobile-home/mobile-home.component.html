@@ -1,0 +1,170 @@
+<div class="mobile-home-container">
+  <!-- Real-time GPS Location Bar -->
+  <div class="home-location-strip" (click)="platformService.fetchRealLocation()">
+    <div class="loc-strip-left">
+      <div class="loc-pin-icon" [class.pulse]="platformService.isLocating()">
+        <app-icon name="map-pin" [size]="16" />
+      </div>
+      <div class="loc-strip-meta">
+        <span class="loc-strip-label">Delivering to:</span>
+        <strong class="loc-strip-title">{{ platformService.userLocationName() }}</strong>
+      </div>
+    </div>
+    <button class="btn-refresh-gps" title="Refresh GPS Location" aria-label="Refresh Location">
+      <app-icon name="refresh-cw" [size]="13" [extraClass]="platformService.isLocating() ? 'spin' : ''" />
+    </button>
+  </div>
+
+  <!-- Active Order Tracker Alert (If order is active) -->
+  @if (activeOrder(); as ord) {
+    <div class="active-order-pill" (click)="platformService.setTab('orders')">
+      <div class="pill-left">
+        <span class="motor-badge">
+          <app-icon name="delivery-scooter" [size]="16" />
+        </span>
+        <div class="pill-info">
+          <span class="pill-title">Active Order #{{ ord.orderId }}</span>
+          <span class="pill-status">Status: <strong>{{ getStatusLabel(ord.status) }}</strong></span>
+        </div>
+      </div>
+      <div class="pill-right">
+        <span>Track</span>
+        <app-icon name="chevron-right" [size]="14" />
+      </div>
+    </div>
+  }
+
+  <!-- App Banner Slider / Promo Card -->
+  <div class="hero-promo-card">
+    <div class="promo-badge">
+      <app-icon name="sparkles" [size]="14" />
+      <span>Bidar's No. 1 Food Destination</span>
+    </div>
+    <h2 class="promo-heading">Fresh Rolls & Handi Biryani</h2>
+    <p class="promo-sub">Cooked fresh on order • 100% Halal • Delivered Hot</p>
+    
+    <div class="promo-cta-row">
+      <button class="btn-primary-order" (click)="goToMenu('all')">
+        <app-icon name="utensils" [size]="16" />
+        <span>Order Now</span>
+      </button>
+      <div class="promo-perk">
+        <app-icon name="clock" [size]="14" />
+        <span>20-30 Min Delivery</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Category Circles -->
+  <section class="section-categories">
+    <div class="section-title-row">
+      <h3 class="section-title">Explore Categories</h3>
+      <button class="see-all-btn" (click)="goToMenu('all')">See All</button>
+    </div>
+
+    <div class="categories-scroll">
+      @for (cat of quickCategories; track cat.id) {
+        <button class="category-circle-btn" (click)="goToMenu(cat.id)">
+          <div class="cat-circle" [style.background-color]="cat.bg">
+            <span class="cat-emoji">{{ cat.emoji }}</span>
+          </div>
+          <span class="cat-name">{{ cat.label }}</span>
+        </button>
+      }
+    </div>
+  </section>
+
+  <!-- Today's Top Picks / Popular Food Cards -->
+  <section class="section-top-picks">
+    <div class="section-title-row">
+      <div class="title-with-badge">
+        <h3 class="section-title">Popular Delicacies</h3>
+        <span class="flame-badge">
+          <app-icon name="flame" [size]="12" /> Hot
+        </span>
+      </div>
+      <button class="see-all-btn" (click)="goToMenu('all')">View Menu</button>
+    </div>
+
+    <div class="picks-grid">
+      @for (item of featuredItems(); track item.id) {
+        <div class="app-dish-card" (click)="openDishModal(item)">
+          <div class="dish-thumb-wrap">
+            <img [src]="item.imageUrl" [alt]="item.name" class="dish-img" loading="lazy" />
+            <div class="diet-dot-badge" [class.veg]="item.dietType === 'veg'" [class.non-veg]="item.dietType === 'non-veg'">
+              <span class="inner-dot"></span>
+            </div>
+            @if (item.tags && item.tags.length > 0) {
+              <span class="item-tag-pill">{{ item.tags[0] }}</span>
+            }
+          </div>
+
+          <div class="dish-details">
+            <h4 class="dish-name">{{ item.name }}</h4>
+            <div class="price-rating-row">
+              <span class="dish-price">{{ item.price | inr }}</span>
+              <div class="rating-badge">
+                <app-icon name="star" [size]="11" />
+                <span>4.8</span>
+              </div>
+            </div>
+
+            <!-- Add Button or Stepper -->
+            <div class="dish-action-row" (click)="$event.stopPropagation()">
+              @if (getItemQuantity(item.id) > 0) {
+                <div class="stepper-wrap">
+                  <button class="step-btn" (click)="updateQty(item, -1)">-</button>
+                  <span class="step-qty">{{ getItemQuantity(item.id) }}</span>
+                  <button class="step-btn" (click)="updateQty(item, 1)">+</button>
+                </div>
+              } @else {
+                <button class="btn-add-item" (click)="addToCart(item)">
+                  <span>ADD</span>
+                  <app-icon name="plus" [size]="12" />
+                </button>
+              }
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  </section>
+
+  <!-- Signature Kunafa Special Card -->
+  @if (kunafaProduct(); as kunafa) {
+    <section class="kunafa-banner-card" (click)="openDishModal(kunafa)">
+      <div class="kunafa-content">
+        <span class="kunafa-pill">✨ Bidar's Signature Sweet</span>
+        <h3 class="kunafa-title">Crispy Turkish Kunafa Jar</h3>
+        <p class="kunafa-desc">Loaded with roasted crispy vermicelli, molten creamy filling, and fragrant syrup.</p>
+        <div class="kunafa-bottom">
+          <span class="kunafa-price">{{ kunafa.price | inr }}</span>
+          <button class="btn-kunafa-add" (click)="addToCart(kunafa); $event.stopPropagation()">
+            <span>Order Now</span>
+            <app-icon name="arrow-right" [size]="14" />
+          </button>
+        </div>
+      </div>
+      <div class="kunafa-img-wrap">
+        <img [src]="kunafa.imageUrl" alt="Kunafa Jar" class="kunafa-img" />
+      </div>
+    </section>
+  }
+
+  <!-- Trust Badges -->
+  <section class="trust-strip">
+    <div class="trust-item">
+      <app-icon name="shield-check" [size]="18" />
+      <span>100% Halal Meat</span>
+    </div>
+    <div class="trust-item">
+      <app-icon name="chef-hat" [size]="18" />
+      <span>Freshly Cooked</span>
+    </div>
+    <div class="trust-item">
+      <app-icon name="delivery-scooter" [size]="18" />
+      <span>Fast Bidar Delivery</span>
+    </div>
+  </section>
+</div>
+

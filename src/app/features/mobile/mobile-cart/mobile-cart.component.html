@@ -1,0 +1,130 @@
+<div class="mobile-cart-container">
+  <div class="cart-top-bar">
+    <h2 class="cart-page-title">Shopping Cart</h2>
+    @if (!cartService.isCartEmpty()) {
+      <span class="cart-count-badge">{{ cartService.totalItemCount() }} {{ cartService.totalItemCount() === 1 ? 'item' : 'items' }}</span>
+    }
+  </div>
+
+  @if (cartService.isCartEmpty()) {
+    <!-- Empty Cart State -->
+    <div class="empty-cart-view">
+      <div class="empty-icon-circle">
+        <app-icon name="shopping-bag" [size]="48" />
+      </div>
+      <h3 class="empty-head">Your cart is empty</h3>
+      <p class="empty-sub">Explore our delicious menu of fresh rolls, spicy biryani, and authentic desserts!</p>
+      <button class="btn-start-order" (click)="platformService.setTab('menu')">
+        <app-icon name="utensils" [size]="16" />
+        <span>Browse Menu</span>
+      </button>
+    </div>
+  } @else {
+    <!-- Delivery Destination Bar -->
+    <div class="delivery-address-card">
+      <div class="address-icon">
+        <app-icon name="map-pin" [size]="18" />
+      </div>
+      <div class="address-details">
+        <span class="address-label">Delivery Destination</span>
+        <strong class="address-loc">Bidar City Limits (Karnataka)</strong>
+        <span class="delivery-time">Estimated Delivery: 20-30 mins</span>
+      </div>
+    </div>
+
+    <!-- Cart Items List -->
+    <div class="cart-items-section">
+      <h3 class="section-label">Order Items</h3>
+
+      <div class="cart-items-list">
+        @for (item of cartService.items(); track item.menuItem.id) {
+          <div class="cart-item-card">
+            <div class="item-thumb-box">
+              <img [src]="item.menuItem.imageUrl" [alt]="item.menuItem.name" class="item-img" />
+              <div class="diet-dot-badge" [class.veg]="item.menuItem.dietType === 'veg'" [class.non-veg]="item.menuItem.dietType === 'non-veg'">
+                <span class="inner-dot"></span>
+              </div>
+            </div>
+
+            <div class="item-meta">
+              <h4 class="item-name">{{ item.menuItem.name }}</h4>
+              <span class="item-unit-price">{{ item.menuItem.price | inr }} each</span>
+
+              <!-- Stepper -->
+              <div class="stepper-wrap">
+                <button class="step-btn" (click)="updateQuantity(item, -1)">-</button>
+                <span class="step-val">{{ item.quantity }}</span>
+                <button class="step-btn" (click)="updateQuantity(item, 1)">+</button>
+              </div>
+            </div>
+
+            <div class="item-total-side">
+              <span class="item-sum">{{ (item.menuItem.price * item.quantity) | inr }}</span>
+              <button class="btn-remove-item" (click)="removeItem(item)" aria-label="Remove item">
+                <app-icon name="trash-2" [size]="15" />
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+
+      <button class="btn-add-more" (click)="platformService.setTab('menu')">
+        <app-icon name="plus" [size]="14" />
+        <span>Add More Items</span>
+      </button>
+    </div>
+
+    <!-- Bill Details Card -->
+    <div class="bill-summary-card">
+      <h3 class="section-label">Bill Summary</h3>
+
+      <div class="bill-rows">
+        <div class="bill-row">
+          <span>Item Subtotal</span>
+          <span>{{ calculation().subtotal | inr }}</span>
+        </div>
+
+        <div class="bill-row">
+          <div class="row-with-info">
+            <span>Delivery Charge</span>
+            @if (calculation().isAfterMidnight) {
+              <span class="midnight-tag">Midnight rate</span>
+            }
+          </div>
+          <span [class.free-tag]="calculation().deliveryCharge === 0">
+            {{ calculation().deliveryCharge === 0 ? 'FREE' : (calculation().deliveryCharge | inr) }}
+          </span>
+        </div>
+
+        <div class="bill-row">
+          <span>Packaging & Kitchen Fee</span>
+          <span class="free-tag">FREE</span>
+        </div>
+
+        <div class="bill-divider"></div>
+
+        <div class="bill-row grand-total-row">
+          <div class="grand-label">
+            <strong>Grand Total</strong>
+            <span class="tax-note">Inclusive of all taxes</span>
+          </div>
+          <strong class="grand-amount">{{ calculation().total | inr }}</strong>
+        </div>
+      </div>
+    </div>
+
+    <!-- Fixed Bottom Checkout Bar -->
+    <div class="sticky-checkout-bar">
+      <div class="checkout-price-info">
+        <span class="total-caption">Total to Pay</span>
+        <strong class="total-big-val">{{ calculation().total | inr }}</strong>
+      </div>
+
+      <button class="btn-checkout-now" (click)="proceedToCheckout()">
+        <span>Proceed to Checkout</span>
+        <app-icon name="arrow-right" [size]="16" />
+      </button>
+    </div>
+  }
+</div>
+
