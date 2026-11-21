@@ -6,19 +6,139 @@
     role="dialog"
     aria-label="The Bite Zone Bidar"
   >
-    <!-- Background Layer with User Mockup Artwork -->
-    <div class="splash-art-bg">
-      <img
-        src="images/splash-screen-bg.jpg"
-        alt="The Bite Zone Bidar"
-        class="splash-mockup-img"
-      />
+    <!-- Background Subtle Gourmet Food Doodles -->
+    <div class="doodle-pattern-bg" aria-hidden="true">
+      <!-- Burger Doodle Top Left -->
+      <svg class="doodle doodle-burger" viewBox="0 0 64 64" fill="none" stroke="currentColor">
+        <path d="M12 28C12 18 20 12 32 12C44 12 52 18 52 28H12Z" stroke-width="2.5" stroke-linecap="round"/>
+        <path d="M10 34H54" stroke-width="2.5" stroke-linecap="round"/>
+        <path d="M14 40C18 38 22 42 26 40C30 38 34 42 38 40C42 38 46 42 50 40" stroke-width="2.5" stroke-linecap="round"/>
+        <path d="M14 46C14 52 22 54 32 54C42 54 50 52 50 46H14Z" stroke-width="2.5"/>
+        <circle cx="24" cy="20" r="1.5" fill="currentColor"/>
+        <circle cx="32" cy="18" r="1.5" fill="currentColor"/>
+        <circle cx="40" cy="21" r="1.5" fill="currentColor"/>
+      </svg>
+
+      <!-- Drink Cup Top Right -->
+      <svg class="doodle doodle-drink" viewBox="0 0 64 64" fill="none" stroke="currentColor">
+        <path d="M38 8L34 20H18L24 54C24.5 57 27 59 30 59H42C45 59 47.5 57 48 54L54 20H34" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M16 20H56" stroke-width="2.5" stroke-linecap="round"/>
+        <path d="M42 6L46 3" stroke-width="2.5" stroke-linecap="round"/>
+      </svg>
+
+      <!-- Roll / Wrap Left Center -->
+      <svg class="doodle doodle-roll" viewBox="0 0 64 64" fill="none" stroke="currentColor">
+        <rect x="14" y="24" width="36" height="18" rx="9" transform="rotate(-30 14 24)" stroke-width="2.5"/>
+        <path d="M26 22L36 39" stroke-width="2" stroke-linecap="round"/>
+        <path d="M33 18L43 35" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+
+      <!-- Fries Right Center -->
+      <svg class="doodle doodle-fries" viewBox="0 0 64 64" fill="none" stroke="currentColor">
+        <path d="M18 28L22 54H42L46 28" stroke-width="2.5" stroke-linecap="round"/>
+        <path d="M24 28V12M32 28V8M40 28V14M28 28V16M36 28V10" stroke-width="2.5" stroke-linecap="round"/>
+      </svg>
+
+      <!-- Chicken Drumstick Bottom Left -->
+      <svg class="doodle doodle-drumstick" viewBox="0 0 64 64" fill="none" stroke="currentColor">
+        <path d="M22 42C17 40 14 34 16 29C18 23 25 21 31 23C36 25 43 18 47 22C51 26 44 33 46 38C48 44 46 51 40 53C35 55 29 52 27 47L17 57C15 59 12 59 10 57C8 55 8 52 10 50L20 40" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+
+      <!-- Chef Hat Bottom Right -->
+      <svg class="doodle doodle-hat" viewBox="0 0 64 64" fill="none" stroke="currentColor">
+        <path d="M18 46H46V50H18V46Z" stroke-width="2.5"/>
+        <path d="M18 46C14 44 12 38 15 33C18 28 23 30 25 28C27 22 37 20 41 26C45 25 49 28 50 33C51 38 49 44 46 46" stroke-width="2.5" stroke-linecap="round"/>
+      </svg>
     </div>
 
-    <!-- Animated Bottom Spinner over the Green Wave -->
-    <div class="bottom-spinner-wrap">
-      <div class="circular-spinner"></div>
+    <!-- Main Central Content Card -->
+    <div class="splash-content">
+      <!-- Brand Identity Section -->
+      <div class="brand-section">
+        <!-- Chef Hat + Sparkles -->
+        <div class="chef-logo-wrapper">
+          <div class="sparkle sp-1">✦</div>
+          <div class="sparkle sp-2">✦</div>
+          <div class="sparkle sp-3">✦</div>
+
+          <div class="chef-icon-box">
+            <svg class="chef-hat-svg" viewBox="0 0 48 48" fill="none">
+              <!-- Chef Hat Puffs -->
+              <path
+                d="M13 32C9 30 8 24 11 19C14 14 19 16 21 14C23 9 31 8 35 12C39 10 43 14 43 19C43 24 41 30 37 32"
+                fill="#FFFFFF"
+                stroke="#082816"
+                stroke-width="2.6"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <path d="M13 32H37V37H13V32Z" fill="#082816" stroke="#082816" stroke-width="2" />
+              <!-- Hat pleat lines -->
+              <path d="M20 18V26" stroke="#082816" stroke-width="2" stroke-linecap="round" />
+              <path d="M28 17V26" stroke="#082816" stroke-width="2" stroke-linecap="round" />
+            </svg>
+          </div>
+
+          <!-- TBZB Pill Badge -->
+          <div class="tbzb-pill-badge">
+            <span>TBZB</span>
+          </div>
+        </div>
+
+        <!-- THE BITE ZONE -->
+        <h1 class="brand-name">THE BITE ZONE</h1>
+
+        <!-- — BIDAR — -->
+        <div class="city-rule-wrap">
+          <span class="gold-line"></span>
+          <span class="city-name">BIDAR</span>
+          <span class="gold-line"></span>
+        </div>
+
+        <!-- CLOUD KITCHEN -->
+        <div class="cloud-kitchen-tag">CLOUD KITCHEN</div>
+
+        <!-- Cursive Slogan -->
+        <div class="slogan-container">
+          <span class="slogan-text">Good Food. Good Mood.</span>
+          <!-- Curved underline swoosh -->
+          <svg class="swoosh-svg" viewBox="0 0 220 20" fill="none">
+            <path
+              d="M10 12C60 17 150 18 210 6"
+              stroke="#F59E0B"
+              stroke-width="3.5"
+              stroke-linecap="round"
+            />
+          </svg>
+        </div>
+      </div>
+
+      <!-- Centerpiece Steaming Food Dish -->
+      <div class="food-showcase-section">
+        <!-- Rising Steam Animation -->
+        <div class="steam-container" aria-hidden="true">
+          <div class="steam-whisper st-1"></div>
+          <div class="steam-whisper st-2"></div>
+          <div class="steam-whisper st-3"></div>
+        </div>
+
+        <!-- Handi Biryani & Raita Bowl -->
+        <div class="food-img-frame">
+          <img
+            src="images/food/splash-biryani.png"
+            alt="Authentic Dum Biryani - The Bite Zone Bidar"
+            class="food-img"
+          />
+        </div>
+      </div>
+
+      <!-- Bottom Minimalist Loading Bar (Clean - Zero bottom shapes) -->
+      <div class="bottom-loading-section">
+        <div class="modern-spinner">
+          <div class="spinner-ring"></div>
+        </div>
+        <span class="loading-text">Preparing fresh flavors of Bidar...</span>
+      </div>
     </div>
   </div>
 }
-
