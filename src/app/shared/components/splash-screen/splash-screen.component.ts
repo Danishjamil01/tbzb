@@ -16,10 +16,10 @@ export class SplashScreenComponent implements OnInit, OnDestroy {
   private timer: any = null;
 
   ngOnInit(): void {
-    // Set status bar theme color to match the splash background (#FAF8F5)
-    this.updateThemeColor('#FAF8F5');
+    // Set status bar theme color to match the splash background (#FFFFFF)
+    this.updateThemeColor('#FFFFFF');
 
-    // Minimum 4.0 seconds display time as requested by user
+    // Minimum 4.0 seconds display time as requested
     this.timer = setTimeout(() => {
       this.dismiss();
     }, 4000);

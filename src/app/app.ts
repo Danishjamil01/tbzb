@@ -77,9 +77,22 @@ export class App {
 
   onSplashFinished(): void {
     this.showSplash.set(false);
-    // In App mode: trigger the "Find Your Location" screen right after splash!
     if (this.platformService.isAppMode()) {
-      this.showLocationScreen.set(true);
+      let savedLoc: string | null = null;
+      try {
+        if (typeof localStorage !== 'undefined') {
+          savedLoc = localStorage.getItem('tbzb_saved_location');
+        }
+      } catch (e) {}
+
+      if (!savedLoc) {
+        // First-time user: show Location screen
+        this.showLocationScreen.set(true);
+      } else {
+        // Returning user: pre-populate location and show Home screen directly
+        this.platformService.userLocationName.set(savedLoc);
+        this.showLocationScreen.set(false);
+      }
     }
   }
 

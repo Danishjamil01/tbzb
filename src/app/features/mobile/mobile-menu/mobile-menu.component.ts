@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MenuService } from '../../../core/services/menu.service';
 import { CartService } from '../../../core/services/cart.service';
+import { PlatformService } from '../../../core/services/platform.service';
 import { FoodCategory, DietType, MenuItem } from '../../../core/models/menu.model';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { InrPipe } from '../../../shared/pipes/inr.pipe';
@@ -16,9 +17,15 @@ import { InrPipe } from '../../../shared/pipes/inr.pipe';
 })
 export class MobileMenuComponent {
   menuService = inject(MenuService);
-  private cartService = inject(CartService);
+  cartService = inject(CartService);
+  platformService = inject(PlatformService);
 
   filteredItems = this.menuService.filteredItems;
+  cartCount = this.cartService.totalItemCount;
+
+  cartTotal(): number {
+    return this.cartService.calculation().total;
+  }
 
   selectCategory(catId: FoodCategory): void {
     this.menuService.selectedCategory.set(catId);

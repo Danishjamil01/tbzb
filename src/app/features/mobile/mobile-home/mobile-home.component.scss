@@ -597,3 +597,62 @@
   }
 }
 
+/* Floating Cart Bar (Industry Standard in Swiggy/Zomato) */
+.floating-cart-bar {
+  position: fixed;
+  bottom: 68px;
+  left: 12px;
+  right: 12px;
+  background: linear-gradient(135deg, #092819 0%, #0F472B 100%);
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  border-radius: 14px;
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #FFFFFF;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  z-index: 990;
+  cursor: pointer;
+  animation: slideUpFloat 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+
+  .cart-bar-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    .cart-items-tag {
+      font-size: 11px;
+      font-weight: 700;
+      color: #A7F3D0;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 2px 7px;
+      border-radius: 6px;
+    }
+
+    .cart-price-tag {
+      font-size: 14.5px;
+      font-weight: 800;
+      color: #FBBF24;
+    }
+  }
+
+  .cart-bar-right {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 800;
+    color: #FFFFFF;
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+}
+
+@keyframes slideUpFloat {
+  0% { transform: translateY(20px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+

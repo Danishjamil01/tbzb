@@ -123,5 +123,19 @@
       }
     }
   </div>
+
+  <!-- Floating Cart Bar -->
+  @if (cartCount() > 0) {
+    <div class="floating-cart-bar" (click)="platformService.setTab('cart')">
+      <div class="cart-bar-left">
+        <span class="cart-items-tag">{{ cartCount() }} {{ cartCount() === 1 ? 'ITEM' : 'ITEMS' }}</span>
+        <span class="cart-price-tag">{{ cartTotal() | inr }}</span>
+      </div>
+      <div class="cart-bar-right">
+        <span>View Cart</span>
+        <app-icon name="arrow-right" [size]="16" />
+      </div>
+    </div>
+  }
 </div>
 

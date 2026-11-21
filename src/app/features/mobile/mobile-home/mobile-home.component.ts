@@ -16,12 +16,18 @@ import { InrPipe } from '../../../shared/pipes/inr.pipe';
 })
 export class MobileHomeComponent {
   platformService = inject(PlatformService);
-  private menuService = inject(MenuService);
-  private cartService = inject(CartService);
+  menuService = inject(MenuService);
+  cartService = inject(CartService);
 
   featuredItems = this.menuService.featuredItems;
   kunafaProduct = this.menuService.kunafaProduct;
   activeOrder = this.platformService.customerActiveOrder;
+
+  cartCount = this.cartService.totalItemCount;
+
+  cartTotal(): number {
+    return this.cartService.calculation().total;
+  }
 
   readonly quickCategories = [
     { id: 'all' as FoodCategory, label: 'All Items', emoji: '🍽️', bg: '#FEF3C7' },
