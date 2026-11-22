@@ -6,74 +6,24 @@
     role="dialog"
     aria-label="The Bite Zone Bidar"
   >
-    <!-- Background Subtle Gourmet Golden Food Doodles (Matches Reference Image) -->
-    <div class="doodle-pattern-bg" aria-hidden="true">
-      <!-- Burger Doodle Top-Left -->
-      <svg class="doodle doodle-burger" viewBox="0 0 64 64" fill="none" stroke="currentColor">
-        <path d="M12 28C12 18 20 12 32 12C44 12 52 18 52 28H12Z" stroke-width="2.2" stroke-linecap="round"/>
-        <path d="M10 34H54" stroke-width="2.2" stroke-linecap="round"/>
-        <path d="M14 40C18 38 22 42 26 40C30 38 34 42 38 40C42 38 46 42 50 40" stroke-width="2.2" stroke-linecap="round"/>
-        <path d="M14 46C14 52 22 54 32 54C42 54 50 52 50 46H14Z" stroke-width="2.2"/>
-        <circle cx="24" cy="20" r="1.5" fill="currentColor"/>
-        <circle cx="32" cy="18" r="1.5" fill="currentColor"/>
-        <circle cx="40" cy="21" r="1.5" fill="currentColor"/>
-      </svg>
-
-      <!-- French Fries Doodle Top-Right -->
-      <svg class="doodle doodle-fries" viewBox="0 0 64 64" fill="none" stroke="currentColor">
-        <path d="M18 26L22 54H42L46 26" stroke-width="2.2" stroke-linecap="round"/>
-        <path d="M24 26V12M32 26V8M40 26V14M28 26V16M36 26V10" stroke-width="2.2" stroke-linecap="round"/>
-      </svg>
-
-      <!-- Chicken Drumstick Doodle Mid-Left -->
-      <svg class="doodle doodle-drumstick" viewBox="0 0 64 64" fill="none" stroke="currentColor">
-        <path d="M22 42C17 40 14 34 16 29C18 23 25 21 31 23C36 25 43 18 47 22C51 26 44 33 46 38C48 44 46 51 40 53C35 55 29 52 27 47L17 57C15 59 12 59 10 57C8 55 8 52 10 50L20 40" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-
-      <!-- Pizza Slice Doodle Mid-Right -->
-      <svg class="doodle doodle-pizza" viewBox="0 0 64 64" fill="none" stroke="currentColor">
-        <path d="M12 18C25 15 39 15 52 18L32 56L12 18Z" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="M14 24C26 21 38 21 50 24" stroke-width="2" stroke-linecap="round"/>
-        <circle cx="28" cy="30" r="2.5" fill="currentColor"/>
-        <circle cx="36" cy="36" r="2" fill="currentColor"/>
-        <circle cx="28" cy="44" r="1.8" fill="currentColor"/>
-      </svg>
+    <!-- 1. Center Brand Logo Section -->
+    <div class="splash-center-wrap">
+      <img
+        src="images/splash-tbzb-logo.png"
+        alt="TBZB - The Bite Zone Bidar"
+        class="brand-logo-img"
+      />
     </div>
 
-    <!-- Main Content Flow (Vertical Flex) -->
-    <div class="splash-card-layout">
-      <!-- 1. Top Section: TBZB Brand Identity Logo -->
-      <div class="splash-logo-container">
-        <img
-          src="images/splash-logo.png"
-          alt="TBZB - The Bite Zone Bidar"
-          class="brand-logo-img"
-        />
+    <!-- 2. Bottom Section: Minimalist Circular Red Loader & Status Text -->
+    <div class="splash-bottom-wrap">
+      <div class="circular-spinner-box">
+        <svg class="circular-loader" viewBox="0 0 50 50">
+          <circle class="loader-track" cx="25" cy="25" r="20" fill="none" stroke-width="4.5"/>
+          <circle class="loader-arc" cx="25" cy="25" r="20" fill="none" stroke-width="4.5" stroke-linecap="round"/>
+        </svg>
       </div>
-
-      <!-- 2. Center Section: Food Feast Trio (Burger + Dum Biryani + Rolls) -->
-      <div class="splash-food-container">
-        <!-- Live Rising Steam Whispers -->
-        <div class="steam-ambient-wrap" aria-hidden="true">
-          <div class="steam-puff st-1"></div>
-          <div class="steam-puff st-2"></div>
-          <div class="steam-puff st-3"></div>
-        </div>
-
-        <img
-          src="images/splash-food-trio.png"
-          alt="Fresh Chicken Burger, Dum Biryani, and Grilled Rolls"
-          class="food-trio-img"
-        />
-      </div>
-
-      <!-- 3. Bottom Section: Minimalist Red Loader & Caption (Clean, Zero Shapes) -->
-      <div class="splash-loader-container">
-        <div class="red-spinner-wrap">
-          <div class="red-loader-ring"></div>
-        </div>
-        <p class="loading-status-text">Loading your food experience...</p>
-      </div>
+      <p class="loading-status-text">Loading your food experience...</p>
     </div>
   </div>
 }

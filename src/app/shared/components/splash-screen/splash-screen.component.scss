@@ -7,264 +7,115 @@
   z-index: 9999999;
   display: flex;
   flex-direction: column;
+  justify-content: space-between;
   align-items: center;
-  justify-content: center;
   overflow: hidden;
   transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1), transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   user-select: none;
   -webkit-user-select: none;
-  padding: env(safe-area-inset-top, 16px) 16px env(safe-area-inset-bottom, 24px);
+  padding: env(safe-area-inset-top, 24px) 20px env(safe-area-inset-bottom, 36px);
   box-sizing: border-box;
 
   &.fade-exit {
     opacity: 0;
-    transform: scale(1.02);
+    transform: scale(1.01);
     pointer-events: none;
   }
 }
 
-/* Subtle Golden Line Food Doodles Pattern */
-.doodle-pattern-bg {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  overflow: hidden;
-  color: #D97706;
-  opacity: 0.38;
-  z-index: 1;
-
-  .doodle {
-    position: absolute;
-    width: 54px;
-    height: 54px;
-
-    &.doodle-burger {
-      top: 5%;
-      left: 7%;
-      transform: rotate(-10deg);
-    }
-
-    &.doodle-fries {
-      top: 6%;
-      right: 7%;
-      transform: rotate(8deg);
-    }
-
-    &.doodle-drumstick {
-      top: 50%;
-      left: 4%;
-      transform: rotate(-30deg);
-    }
-
-    &.doodle-pizza {
-      top: 48%;
-      right: 5%;
-      transform: rotate(20deg);
-    }
-  }
-}
-
-/* Splash Card Layout Container */
-.splash-card-layout {
-  position: relative;
-  z-index: 2;
-  width: 100%;
-  max-width: 440px;
-  height: 100%;
-  max-height: 840px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 0 20px;
-  box-sizing: border-box;
-}
-
-/* 1. Top Logo Container */
-.splash-logo-container {
+/* 1. Center Brand Logo Section */
+.splash-center-wrap {
+  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
   width: 100%;
-  padding-top: 10px;
-  animation: fadeInDown 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  padding-top: max(4vh, 16px);
 
   .brand-logo-img {
-    width: 74%;
+    width: 78%;
     max-width: 290px;
     height: auto;
     object-fit: contain;
-    filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.04));
+    animation: logoAppear 0.55s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   }
 }
 
-/* 2. Center Food Trio Container */
-.splash-food-container {
-  position: relative;
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 10px 0;
-  animation: zoomFade 0.85s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-
-  .food-trio-img {
-    width: 100%;
-    max-width: 440px;
-    height: auto;
-    object-fit: contain;
-    filter: drop-shadow(0 14px 20px rgba(0, 0, 0, 0.12));
-  }
-}
-
-/* Rising Steam Animation over the Biryani */
-.steam-ambient-wrap {
-  position: absolute;
-  top: 10px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 100px;
-  height: 60px;
-  display: flex;
-  justify-content: space-around;
-  pointer-events: none;
-  z-index: 3;
-
-  .steam-puff {
-    width: 12px;
-    height: 38px;
-    background: linear-gradient(to top, rgba(255, 255, 255, 0.75) 0%, rgba(255, 255, 255, 0) 100%);
-    border-radius: 50%;
-    filter: blur(5px);
-    animation: steamFloat 2.2s infinite ease-out;
-
-    &.st-1 {
-      animation-delay: 0s;
-      transform: rotate(-8deg);
-    }
-
-    &.st-2 {
-      animation-delay: 0.7s;
-      height: 46px;
-    }
-
-    &.st-3 {
-      animation-delay: 1.4s;
-      transform: rotate(10deg);
-    }
-  }
-}
-
-@keyframes steamFloat {
-  0% {
-    opacity: 0;
-    transform: translateY(16px) scaleX(0.7);
-  }
-
-  40% {
-    opacity: 0.8;
-  }
-
-  100% {
-    opacity: 0;
-    transform: translateY(-28px) scaleX(1.8);
-  }
-}
-
-/* 3. Bottom Loader Container (Clean, Zero Shapes) */
-.splash-loader-container {
+/* 2. Bottom Circular Red Loader & Status Text */
+.splash-bottom-wrap {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
-  padding-bottom: 8px;
-  animation: fadeInUp 0.7s ease-out forwards;
-}
-
-.red-spinner-wrap {
-  width: 34px;
-  height: 34px;
-  display: flex;
-  align-items: center;
   justify-content: center;
+  padding-bottom: max(5vh, 28px);
+  width: 100%;
+  animation: fadeIn 0.6s ease-out 0.2s both;
 
-  .red-loader-ring {
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    border: 3.5px solid rgba(220, 38, 38, 0.15);
-    border-top-color: #DC2626;
-    border-right-color: #EF4444;
-    animation: spinLoader 0.85s linear infinite;
-    box-shadow: 0 0 10px rgba(220, 38, 38, 0.2);
+  .circular-spinner-box {
+    width: 44px;
+    height: 44px;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    .circular-loader {
+      width: 100%;
+      height: 100%;
+      animation: spinLoader 0.9s linear infinite;
+      transform-origin: center center;
+
+      .loader-track {
+        stroke: #E5E7EB;
+      }
+
+      .loader-arc {
+        stroke: #E52E1D;
+        stroke-dasharray: 45, 150;
+        stroke-dashoffset: 0;
+      }
+    }
+  }
+
+  .loading-status-text {
+    font-size: 14px;
+    font-weight: 500;
+    color: #52525B;
+    margin: 0;
+    letter-spacing: 0.1px;
+    text-align: center;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   }
 }
 
-.loading-status-text {
-  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-  font-size: 13.5px;
-  font-weight: 700;
-  color: #451A03;
-  letter-spacing: 0.2px;
-  margin: 0;
-}
-
-/* Keyframes */
-@keyframes fadeInDown {
-  0% {
-    opacity: 0;
-    transform: translateY(-14px);
-  }
-
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes fadeInUp {
-  0% {
-    opacity: 0;
-    transform: translateY(14px);
-  }
-
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes zoomFade {
-  0% {
-    opacity: 0;
-    transform: scale(0.96);
-  }
-
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
+/* Smooth Animations */
 @keyframes spinLoader {
   0% {
     transform: rotate(0deg);
   }
-
   100% {
     transform: rotate(360deg);
   }
 }
 
-/* Screen height responsiveness */
-@media (max-height: 700px) {
-  .splash-logo-container .brand-logo-img {
-    max-width: 230px;
+@keyframes logoAppear {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
   }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
 
-  .splash-food-container .food-trio-img {
-    max-width: 360px;
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
