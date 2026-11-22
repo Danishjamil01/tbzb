@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { CartService } from '../../core/services/cart.service';
@@ -9,6 +9,7 @@ import { IconComponent } from '../../shared/components/icon/icon.component';
 import { PlacedOrder, KitchenOrder } from '../../core/models/order.model';
 import { OrderService } from '../../core/services/order.service';
 import { PlatformService } from '../../core/services/platform.service';
+import { AuthService } from '../../core/services/auth.service';
 
 @Component({
   selector: 'app-checkout-modal',
@@ -992,6 +993,25 @@ export class CheckoutModalComponent {
   private toastService = inject(ToastService);
   private orderService = inject(OrderService);
   private platformService = inject(PlatformService);
+  authService = inject(AuthService);
+
+  constructor() {
+    effect(() => {
+      const isOpen = this.cartService.isCheckoutModalOpen();
+      const user = this.authService.currentUser();
+      if (isOpen && user) {
+        if (!this.checkoutForm.get('fullName')?.value && user.name) {
+          this.checkoutForm.patchValue({ fullName: user.name });
+        }
+        if (!this.checkoutForm.get('mobileNumber')?.value && user.mobileNumber) {
+          this.checkoutForm.patchValue({ mobileNumber: user.mobileNumber });
+        }
+        if (!this.checkoutForm.get('areaLocality')?.value && user.savedAddress) {
+          this.checkoutForm.patchValue({ areaLocality: user.savedAddress });
+        }
+      }
+    });
+  }
 
   status = this.statusService.status;
   config = this.statusService.config;
@@ -1247,6 +1267,11 @@ _Order placed via TBZB Online Website • Delivery strictly within Bidar_`;
     };
     this.orderService.createOrder(kitchenOrder);
     this.platformService.setCustomerOrder(kitchenOrder);
+
+    // If customer is logged in, auto-save / update their Bidar delivery address on server
+    if (this.authService.isLoggedIn() && formValues.areaLocality) {
+      this.authService.updateSavedAddress(formValues.areaLocality);
+    }
 
     // Open WhatsApp
     window.open(whatsAppUrl, '_blank', 'noopener,noreferrer');

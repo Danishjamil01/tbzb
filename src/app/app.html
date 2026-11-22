@@ -8,6 +8,11 @@
   <app-location-screen (locationConfirmed)="onLocationConfirmed($event)"></app-location-screen>
 }
 
+<!-- 3. Mobile Login & Registration Screen (Firestore Connected) -->
+@if (showAuthScreen()) {
+  <app-auth-screen (authFinished)="onAuthFinished()"></app-auth-screen>
+}
+
 <!-- 3. Dual Experience Shell -->
 @if (platformService.isAppMode()) {
   <!-- ============================================ -->
@@ -33,7 +38,7 @@
           <app-mobile-cart></app-mobile-cart>
         }
         @case ('more') {
-          <app-mobile-more></app-mobile-more>
+          <app-mobile-more (openAuth)="showAuthScreen.set(true)"></app-mobile-more>
         }
       }
     </main>

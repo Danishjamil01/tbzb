@@ -140,9 +140,20 @@
     filter: blur(5px);
     animation: steamFloat 2.2s infinite ease-out;
 
-    &.st-1 { animation-delay: 0s; transform: rotate(-8deg); }
-    &.st-2 { animation-delay: 0.7s; height: 46px; }
-    &.st-3 { animation-delay: 1.4s; transform: rotate(10deg); }
+    &.st-1 {
+      animation-delay: 0s;
+      transform: rotate(-8deg);
+    }
+
+    &.st-2 {
+      animation-delay: 0.7s;
+      height: 46px;
+    }
+
+    &.st-3 {
+      animation-delay: 1.4s;
+      transform: rotate(10deg);
+    }
   }
 }
 
@@ -151,9 +162,11 @@
     opacity: 0;
     transform: translateY(16px) scaleX(0.7);
   }
+
   40% {
     opacity: 0.8;
   }
+
   100% {
     opacity: 0;
     transform: translateY(-28px) scaleX(1.8);
@@ -204,6 +217,7 @@
     opacity: 0;
     transform: translateY(-14px);
   }
+
   100% {
     opacity: 1;
     transform: translateY(0);
@@ -215,6 +229,7 @@
     opacity: 0;
     transform: translateY(14px);
   }
+
   100% {
     opacity: 1;
     transform: translateY(0);
@@ -226,6 +241,7 @@
     opacity: 0;
     transform: scale(0.96);
   }
+
   100% {
     opacity: 1;
     transform: scale(1);
@@ -233,8 +249,13 @@
 }
 
 @keyframes spinLoader {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 /* Screen height responsiveness */
@@ -242,6 +263,7 @@
   .splash-logo-container .brand-logo-img {
     max-width: 230px;
   }
+
   .splash-food-container .food-trio-img {
     max-width: 360px;
   }

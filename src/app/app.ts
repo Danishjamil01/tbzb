@@ -20,6 +20,7 @@ import { AdminComponent } from './features/admin/admin.component';
 import { ToastContainerComponent } from './shared/components/toast/toast.component';
 import { SplashScreenComponent } from './shared/components/splash-screen/splash-screen.component';
 import { LocationScreenComponent } from './features/mobile/location-screen/location-screen.component';
+import { AuthScreenComponent } from './features/mobile/auth-screen/auth-screen.component';
 import { MobileHeaderComponent } from './features/mobile/mobile-header/mobile-header.component';
 import { BottomNavComponent } from './features/mobile/bottom-nav/bottom-nav.component';
 import { MobileHomeComponent } from './features/mobile/mobile-home/mobile-home.component';
@@ -29,6 +30,7 @@ import { MobileCartComponent } from './features/mobile/mobile-cart/mobile-cart.c
 import { MobileMoreComponent } from './features/mobile/mobile-more/mobile-more.component';
 import { PlatformService } from './core/services/platform.service';
 import { AdminService } from './core/services/admin.service';
+import { AuthService } from './core/services/auth.service';
 
 @Component({
   selector: 'app-root',
@@ -37,6 +39,7 @@ import { AdminService } from './core/services/admin.service';
     CommonModule,
     SplashScreenComponent,
     LocationScreenComponent,
+    AuthScreenComponent,
     MobileHeaderComponent,
     BottomNavComponent,
     MobileHomeComponent,
@@ -68,15 +71,18 @@ import { AdminService } from './core/services/admin.service';
 })
 export class App {
   platformService = inject(PlatformService);
+  authService = inject(AuthService);
   private adminService = inject(AdminService);
 
   showSplash = signal<boolean>(true);
   showLocationScreen = signal<boolean>(false);
+  showAuthScreen = signal<boolean>(false);
 
   @ViewChild(HoursModalComponent) hoursModal!: HoursModalComponent;
 
   onSplashFinished(): void {
     this.showSplash.set(false);
+
     if (this.platformService.isAppMode()) {
       let savedLoc: string | null = null;
       try {
@@ -86,18 +92,29 @@ export class App {
       } catch (e) {}
 
       if (!savedLoc) {
-        // First-time user: show Location screen
+        // Step 2: Location Capturing Screen
         this.showLocationScreen.set(true);
       } else {
-        // Returning user: pre-populate location and show Home screen directly
         this.platformService.userLocationName.set(savedLoc);
-        this.showLocationScreen.set(false);
+        // If location is saved, check if user needs to login
+        if (!this.authService.isLoggedIn()) {
+          // Step 3: Auth Screen
+          this.showAuthScreen.set(true);
+        }
       }
     }
   }
 
   onLocationConfirmed(location: string): void {
     this.showLocationScreen.set(false);
+    // After location is captured, check auth
+    if (!this.authService.isLoggedIn()) {
+      this.showAuthScreen.set(true);
+    }
+  }
+
+  onAuthFinished(): void {
+    this.showAuthScreen.set(false);
   }
 
   openHoursModal(): void {

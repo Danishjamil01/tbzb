@@ -1,0 +1,255 @@
+<div class="auth-screen-overlay" [class.slide-out]="isDismissing()">
+  <!-- Top Bar with Skip -->
+  <div class="top-nav-bar">
+    <div class="brand-mini">
+      <div class="chef-badge-circle">
+        <app-icon name="chef-hat" [size]="20" />
+      </div>
+      <div class="brand-mini-text">
+        <span class="brand-title">THE BITE ZONE</span>
+        <span class="brand-city">BIDAR</span>
+      </div>
+    </div>
+
+    <button class="skip-btn" (click)="onSkip()" aria-label="Skip to menu">
+      <span>Skip</span>
+      <app-icon name="chevron-right" [size]="14" />
+    </button>
+  </div>
+
+  <div class="auth-card-body">
+    <!-- MODE 1: LOGIN -->
+    @if (mode() === 'login') {
+      <div class="auth-form-wrap">
+        <div class="auth-headings">
+          <h2 class="main-heading">Welcome Back!</h2>
+          <p class="sub-heading">Login to track orders, saved addresses & exclusive discounts</p>
+        </div>
+
+        <form (ngSubmit)="handleLogin()" class="auth-form">
+          <!-- Mobile Number Input -->
+          <div class="input-field-group">
+            <label class="field-label">Mobile Number</label>
+            <div class="input-box">
+              <span class="prefix-tag">+91</span>
+              <input
+                type="tel"
+                [(ngModel)]="loginMobile"
+                name="loginMobile"
+                placeholder="10-digit mobile number"
+                maxlength="10"
+                class="form-input"
+                autocomplete="tel"
+                required
+              />
+            </div>
+          </div>
+
+          <!-- Password Input -->
+          <div class="input-field-group">
+            <div class="label-row">
+              <label class="field-label">Password</label>
+              <button type="button" class="link-btn-small" (click)="switchMode('forgot')">Forgot Password?</button>
+            </div>
+            <div class="input-box">
+              <app-icon name="lock" [size]="18" extraClass="field-icon" />
+              <input
+                [type]="showPassword() ? 'text' : 'password'"
+                [(ngModel)]="loginPassword"
+                name="loginPassword"
+                placeholder="Enter password"
+                class="form-input"
+                autocomplete="current-password"
+                required
+              />
+              <button type="button" class="eye-toggle-btn" (click)="togglePasswordVisibility()" aria-label="Toggle password">
+                <app-icon [name]="showPassword() ? 'eye-off' : 'eye'" [size]="16" />
+              </button>
+            </div>
+          </div>
+
+          <!-- Submit Button -->
+          <button type="submit" class="btn-primary-auth" [disabled]="authService.isLoading()">
+            @if (authService.isLoading()) {
+              <div class="loader-spinner"></div>
+              <span>Logging in...</span>
+            } @else {
+              <span>Login & Continue</span>
+              <app-icon name="arrow-right" [size]="16" />
+            }
+          </button>
+        </form>
+
+        <!-- Switch to Sign Up -->
+        <div class="auth-switch-footer">
+          <span>New to The Bite Zone?</span>
+          <button class="switch-link-btn" (click)="switchMode('register')">Create Account</button>
+        </div>
+      </div>
+    }
+
+    <!-- MODE 2: SIGN UP / REGISTER -->
+    @if (mode() === 'register') {
+      <div class="auth-form-wrap">
+        <div class="auth-headings">
+          <h2 class="main-heading">Create Account</h2>
+          <p class="sub-heading">Join The Bite Zone Bidar for hot doorstep food delivery</p>
+        </div>
+
+        <form (ngSubmit)="handleRegister()" class="auth-form">
+          <!-- Full Name -->
+          <div class="input-field-group">
+            <label class="field-label">Full Name</label>
+            <div class="input-box">
+              <app-icon name="user" [size]="18" extraClass="field-icon" />
+              <input
+                type="text"
+                [(ngModel)]="regName"
+                name="regName"
+                placeholder="e.g. Danish / Rahul"
+                class="form-input"
+                autocomplete="name"
+                required
+              />
+            </div>
+          </div>
+
+          <!-- Mobile Number -->
+          <div class="input-field-group">
+            <label class="field-label">Mobile Number</label>
+            <div class="input-box">
+              <span class="prefix-tag">+91</span>
+              <input
+                type="tel"
+                [(ngModel)]="regMobile"
+                name="regMobile"
+                placeholder="10-digit mobile number"
+                maxlength="10"
+                class="form-input"
+                autocomplete="tel"
+                required
+              />
+            </div>
+          </div>
+
+          <!-- Create Password -->
+          <div class="input-field-group">
+            <label class="field-label">Create Password</label>
+            <div class="input-box">
+              <app-icon name="lock" [size]="18" extraClass="field-icon" />
+              <input
+                [type]="showPassword() ? 'text' : 'password'"
+                [(ngModel)]="regPassword"
+                name="regPassword"
+                placeholder="Min 4 characters"
+                class="form-input"
+                autocomplete="new-password"
+                required
+              />
+              <button type="button" class="eye-toggle-btn" (click)="togglePasswordVisibility()" aria-label="Toggle password">
+                <app-icon [name]="showPassword() ? 'eye-off' : 'eye'" [size]="16" />
+              </button>
+            </div>
+          </div>
+
+          <!-- Submit Button -->
+          <button type="submit" class="btn-primary-auth" [disabled]="authService.isLoading()">
+            @if (authService.isLoading()) {
+              <div class="loader-spinner"></div>
+              <span>Creating Account...</span>
+            } @else {
+              <span>Sign Up & Start Ordering</span>
+              <app-icon name="arrow-right" [size]="16" />
+            }
+          </button>
+        </form>
+
+        <!-- Switch to Login -->
+        <div class="auth-switch-footer">
+          <span>Already have an account?</span>
+          <button class="switch-link-btn" (click)="switchMode('login')">Login</button>
+        </div>
+      </div>
+    }
+
+    <!-- MODE 3: FORGOT PASSWORD -->
+    @if (mode() === 'forgot') {
+      <div class="auth-form-wrap">
+        <div class="auth-headings">
+          <h2 class="main-heading">Reset Password</h2>
+          <p class="sub-heading">Enter your registered mobile number to set a new password</p>
+        </div>
+
+        <form (ngSubmit)="handleResetPassword()" class="auth-form">
+          <!-- Mobile Number -->
+          <div class="input-field-group">
+            <label class="field-label">Registered Mobile Number</label>
+            <div class="input-box">
+              <span class="prefix-tag">+91</span>
+              <input
+                type="tel"
+                [(ngModel)]="forgotMobile"
+                name="forgotMobile"
+                placeholder="10-digit mobile number"
+                maxlength="10"
+                class="form-input"
+                autocomplete="tel"
+                required
+              />
+            </div>
+          </div>
+
+          <!-- New Password -->
+          <div class="input-field-group">
+            <label class="field-label">Set New Password</label>
+            <div class="input-box">
+              <app-icon name="lock" [size]="18" extraClass="field-icon" />
+              <input
+                [type]="showPassword() ? 'text' : 'password'"
+                [(ngModel)]="forgotNewPassword"
+                name="forgotNewPassword"
+                placeholder="Min 4 characters"
+                class="form-input"
+                autocomplete="new-password"
+                required
+              />
+              <button type="button" class="eye-toggle-btn" (click)="togglePasswordVisibility()" aria-label="Toggle password">
+                <app-icon [name]="showPassword() ? 'eye-off' : 'eye'" [size]="16" />
+              </button>
+            </div>
+          </div>
+
+          <!-- Submit Button -->
+          <button type="submit" class="btn-primary-auth" [disabled]="authService.isLoading()">
+            @if (authService.isLoading()) {
+              <div class="loader-spinner"></div>
+              <span>Updating Password...</span>
+            } @else {
+              <span>Update Password & Continue</span>
+              <app-icon name="check" [size]="16" />
+            }
+          </button>
+        </form>
+
+        <!-- Switch to Login -->
+        <div class="auth-switch-footer">
+          <span>Remember your password?</span>
+          <button class="switch-link-btn" (click)="switchMode('login')">Back to Login</button>
+        </div>
+      </div>
+    }
+
+    <!-- Trust Badges -->
+    <div class="trust-footer">
+      <div class="trust-badge">
+        <app-icon name="shield-check" [size]="15" />
+        <span>100% Secure & Halal Certified</span>
+      </div>
+      <div class="trust-badge">
+        <app-icon name="map-pin" [size]="15" />
+        <span>Delivering Across Bidar City</span>
+      </div>
+    </div>
+  </div>
+</div>
+

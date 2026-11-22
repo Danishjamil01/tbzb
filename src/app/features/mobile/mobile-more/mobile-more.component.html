@@ -1,4 +1,45 @@
 <div class="mobile-more-container">
+  <!-- User Account Card (Logged in vs Guest) -->
+  @if (authService.isLoggedIn()) {
+    <div class="user-account-card">
+      <div class="user-info-row">
+        <div class="user-avatar-circle">
+          <app-icon name="user" [size]="24" />
+        </div>
+        <div class="user-details">
+          <div class="user-name-line">
+            <h3 class="user-name">{{ authService.currentUser()?.name || 'TBZB Customer' }}</h3>
+            <span class="member-badge">Verified</span>
+          </div>
+          <span class="user-phone">+91 {{ authService.currentUser()?.mobileNumber }}</span>
+          @if (authService.currentUser()?.savedAddress) {
+            <span class="user-saved-addr">📍 {{ authService.currentUser()?.savedAddress }}</span>
+          }
+        </div>
+      </div>
+      <button class="btn-logout" (click)="authService.logout()" title="Logout of TBZB">
+        <app-icon name="log-out" [size]="15" />
+        <span>Logout</span>
+      </button>
+    </div>
+  } @else {
+    <div class="auth-cta-card">
+      <div class="cta-left">
+        <div class="cta-avatar">
+          <app-icon name="user" [size]="22" />
+        </div>
+        <div class="cta-text">
+          <h3 class="cta-title">Sign in to The Bite Zone</h3>
+          <p class="cta-subtitle">Save delivery addresses & track your orders</p>
+        </div>
+      </div>
+      <button class="btn-cta-login" (click)="openAuth.emit()">
+        <span>Login / Register</span>
+        <app-icon name="arrow-right" [size]="14" />
+      </button>
+    </div>
+  }
+
   <!-- Profile / Brand Header -->
   <div class="brand-hero-card">
     <div class="brand-logo-circle">
