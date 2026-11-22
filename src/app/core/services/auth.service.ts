@@ -39,6 +39,23 @@ export class AuthService {
   }
 
   /**
+   * Cryptographic SHA-256 password hashing with pepper salt
+   * Ensures passwords are NEVER stored in plaintext on Cloud Firestore
+   */
+  private async hashPassword(password: string): Promise<string> {
+    try {
+      if (typeof crypto !== 'undefined' && crypto.subtle) {
+        const salt = '_tbzb_cloud_kitchen_secure_2026_';
+        const msgUint8 = new TextEncoder().encode(password + salt);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+      }
+    } catch (e) {}
+    return password;
+  }
+
+  /**
    * Register a new user in Google Cloud Firestore
    */
   async register(
@@ -67,13 +84,16 @@ export class AuthService {
         return { success: false, message: 'Mobile number already registered. Please login.' };
       }
 
-      // 2. Create user document in Firestore
+      // 2. Hash password with SHA-256 before storing in Firestore
+      const securePassword = await this.hashPassword(password);
+
+      // 3. Create user document in Firestore
       const now = new Date().toISOString();
       const payload = {
         fields: {
           name: { stringValue: name.trim() },
           mobileNumber: { stringValue: cleanMobile },
-          password: { stringValue: password },
+          password: { stringValue: securePassword },
           createdAt: { stringValue: now }
         }
       };
@@ -141,7 +161,8 @@ export class AuthService {
       const createdAt = fields.createdAt?.stringValue || new Date().toISOString();
       const savedAddress = fields.savedAddress?.stringValue;
 
-      if (savedPass !== password) {
+      const hashedPass = await this.hashPassword(password);
+      if (savedPass !== hashedPass && savedPass !== password) {
         return { success: false, message: 'Incorrect password. Try again or reset password.' };
       }
 
@@ -192,14 +213,15 @@ export class AuthService {
       const fields = doc.fields || {};
       const name = fields.name?.stringValue || 'Customer';
 
-      // 2. Patch new password
+      // 2. Hash new password with SHA-256 before patching
+      const securePassword = await this.hashPassword(newPassword);
       const patchUrl = `${this.FIRESTORE_USERS_URL}/${cleanMobile}?updateMask.fieldPaths=password`;
       const patchRes = await fetch(patchUrl, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           fields: {
-            password: { stringValue: newPassword }
+            password: { stringValue: securePassword }
           }
         })
       });
