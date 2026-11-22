@@ -63,21 +63,21 @@ describe('BusinessStatusService', () => {
     expect(status.isOpen).toBe(false);
   });
 
-  it('should apply ₹70 delivery charge after midnight (12:30 AM)', () => {
+  it('should apply ₹60 delivery charge after midnight (12:30 AM)', () => {
     service.setSimulatedTime(0, 30);
     const calc = service.calculateCart(350);
     expect(calc.isAfterMidnight).toBe(true);
-    expect(calc.deliveryCharge).toBe(70);
-    expect(calc.total).toBe(420);
+    expect(calc.deliveryCharge).toBe(60);
+    expect(calc.total).toBe(410);
     expect(calc.hasPendingDeliveryFee).toBe(false);
   });
 
-  it('should mark delivery charge as awaiting confirmation before midnight when null', () => {
+  it('should apply ₹50 delivery charge before midnight', () => {
     service.setSimulatedTime(14, 0); // 2:00 PM
     const calc = service.calculateCart(350);
     expect(calc.isAfterMidnight).toBe(false);
-    expect(calc.deliveryCharge).toBeNull();
-    expect(calc.total).toBe(350);
-    expect(calc.hasPendingDeliveryFee).toBe(true);
+    expect(calc.deliveryCharge).toBe(50);
+    expect(calc.total).toBe(400);
+    expect(calc.hasPendingDeliveryFee).toBe(false);
   });
 });

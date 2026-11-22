@@ -284,7 +284,7 @@ import { AuthService } from '../../core/services/auth.service';
                 <div class="total-text-col">
                   <span class="total-title">Total Payable</span>
                   @if (calculation().isAfterMidnight) {
-                    <span class="fee-note">₹70 late-night delivery included</span>
+                    <span class="fee-note">₹60 late-night delivery included</span>
                   } @else if (calculation().hasPendingDeliveryFee) {
                     <span class="fee-note">Delivery charge confirmed on WhatsApp</span>
                   }
@@ -1199,7 +1199,7 @@ export class CheckoutModalComponent {
     // Delivery Fee Line
     let deliveryLine = '';
     if (calc.isAfterMidnight) {
-      deliveryLine = `🛵 *Delivery Charge:* ₹70 (Late-night rate after midnight)\n`;
+      deliveryLine = `🛵 *Delivery Charge:* ₹60 (Late-night rate after midnight)\n`;
     } else if (calc.deliveryCharge !== null) {
       deliveryLine = `🛵 *Delivery Charge:* ₹${calc.deliveryCharge}\n`;
     } else {
@@ -1261,7 +1261,7 @@ _Order placed via TBZB Online Website • Delivery strictly within Bidar_`;
         total: ci.menuItem.price * ci.quantity
       })),
       subtotal: calc.subtotal,
-      deliveryCharge: calc.deliveryCharge || (calc.isAfterMidnight ? 70 : 0),
+      deliveryCharge: calc.deliveryCharge ?? (calc.isAfterMidnight ? 60 : 50),
       total: calc.total,
       status: 'new'
     };

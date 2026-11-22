@@ -49,62 +49,67 @@ export class PlatformService {
     }
   }
 
-  fetchRealLocation(): void {
+  async fetchRealLocation(): Promise<void> {
+    this.isLocating.set(true);
+
+    // Step 1: Immediate Worldwide IP Geolocation baseline (works anywhere on Earth instantly)
+    try {
+      const ipController = new AbortController();
+      const ipTimeout = setTimeout(() => ipController.abort(), 3500);
+      const ipRes = await fetch('https://ipwho.is/', { signal: ipController.signal });
+      clearTimeout(ipTimeout);
+
+      if (ipRes.ok) {
+        const ipData = await ipRes.json();
+        if (ipData.success) {
+          const city = ipData.city || 'Current Location';
+          const region = ipData.region || ipData.country || '';
+          const name = region ? `${city}, ${region}` : city;
+          this.userLocationName.set(name);
+          this.userCoordinates.set({ lat: ipData.latitude, lng: ipData.longitude });
+        }
+      }
+    } catch (e) {
+      // Ignore IP timeout, proceed to GPS
+    }
+
+    // Step 2: High-accuracy Device GPS (pinpoints exact street / neighborhood)
     if (typeof navigator === 'undefined' || !navigator.geolocation) {
-      this.userLocationName.set('Bidar, Karnataka');
+      this.isLocating.set(false);
       return;
     }
 
-    this.isLocating.set(true);
     navigator.geolocation.getCurrentPosition(
       async (position) => {
         const { latitude, longitude } = position.coords;
         this.userCoordinates.set({ lat: latitude, lng: longitude });
 
         try {
-          // OpenStreetMap Nominatim reverse geocode (Free & accurate)
+          // Accurate free client-side reverse geocoding via BigDataCloud
           const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 6000);
+          const timeoutId = setTimeout(() => controller.abort(), 5000);
 
           const res = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`,
-            {
-              signal: controller.signal,
-              headers: { 'Accept-Language': 'en' }
-            }
+            `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`,
+            { signal: controller.signal }
           );
           clearTimeout(timeoutId);
 
           if (res.ok) {
             const data = await res.json();
-            const addr = data.address || {};
-
-            // Prioritize local neighborhood/area
-            const locality =
-              addr.suburb ||
-              addr.neighbourhood ||
-              addr.residential ||
-              addr.road ||
-              addr.village ||
-              addr.town ||
-              addr.city_district ||
-              'Bidar';
-
-            const city = addr.city || addr.town || addr.county || 'Bidar';
-            this.userLocationName.set(`${locality}, ${city}`);
-          } else {
-            this.userLocationName.set('Bidar, Karnataka');
+            const locality = data.locality || data.suburb || data.neighbourhood || data.city || '';
+            const city = data.city || data.principalSubdivision || data.countryName || '';
+            const locationString = locality && locality !== city ? `${locality}, ${city}` : (city || 'Current Location');
+            this.userLocationName.set(locationString);
           }
         } catch (e) {
-          // Fallback on timeout or network error
-          this.userLocationName.set('Bidar, Karnataka');
+          // Keep the IP-detected location if reverse geocoding fails
         } finally {
           this.isLocating.set(false);
         }
       },
       (error) => {
         this.isLocating.set(false);
-        this.userLocationName.set('Bidar, Karnataka');
       },
       {
         enableHighAccuracy: true,

@@ -76,12 +76,12 @@ export const BUSINESS_CONFIG: BusinessConfig = {
     timeZone: 'Asia/Kolkata'
   },
   deliverySettings: {
-    afterMidnightCharge: 70,
-    beforeMidnightCharge: null, // As specified: kept configurable and awaiting business confirmation
+    afterMidnightCharge: 60, // ₹60 after 12 AM midnight
+    beforeMidnightCharge: 50, // ₹50 normal daytime / evening delivery
     afterMidnightStartHour: 0,
     afterMidnightEndHour: 1,
     deliveryChargeMode: 'configurable',
-    awaitingConfirmationMessage: 'Pre-midnight delivery charge will be confirmed by the restaurant upon order confirmation.'
+    awaitingConfirmationMessage: 'Standard delivery fee: ₹50'
   },
   orderSettings: {
     homeDelivery: true,

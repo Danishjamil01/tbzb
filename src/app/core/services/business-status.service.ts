@@ -109,36 +109,25 @@ export class BusinessStatusService {
     const isAfterMidnight = currentStatus.isAfterMidnight;
 
     if (isAfterMidnight) {
-      const deliveryCharge = this.config.deliverySettings.afterMidnightCharge; // ₹70
+      const deliveryCharge = this.config.deliverySettings.afterMidnightCharge; // ₹60
       return {
         subtotal,
         deliveryCharge,
         isAfterMidnight: true,
-        deliveryChargeNote: '₹70 late-night delivery charge applied (12:00 AM – 1:00 AM).',
+        deliveryChargeNote: '₹60 late-night delivery charge applied (12:00 AM – 1:00 AM).',
         total: subtotal + deliveryCharge,
         hasPendingDeliveryFee: false
       };
     } else {
-      const charge = this.config.deliverySettings.beforeMidnightCharge;
-      if (charge === null || charge === undefined) {
-        return {
-          subtotal,
-          deliveryCharge: null,
-          isAfterMidnight: false,
-          deliveryChargeNote: this.config.deliverySettings.awaitingConfirmationMessage,
-          total: subtotal,
-          hasPendingDeliveryFee: true
-        };
-      } else {
-        return {
-          subtotal,
-          deliveryCharge: charge,
-          isAfterMidnight: false,
-          deliveryChargeNote: `Standard delivery: ₹${charge}`,
-          total: subtotal + charge,
-          hasPendingDeliveryFee: false
-        };
-      }
+      const charge = this.config.deliverySettings.beforeMidnightCharge ?? 50;
+      return {
+        subtotal,
+        deliveryCharge: charge,
+        isAfterMidnight: false,
+        deliveryChargeNote: `Standard delivery: ₹${charge}`,
+        total: subtotal + charge,
+        hasPendingDeliveryFee: false
+      };
     }
   }
 
