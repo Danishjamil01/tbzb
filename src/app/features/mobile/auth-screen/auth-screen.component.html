@@ -26,6 +26,23 @@
           <p class="sub-heading">Login to track orders, saved addresses & exclusive discounts</p>
         </div>
 
+        @if (loginErrorMessage()) {
+          <div class="auth-error-banner" [class.not-found]="isAccountNotFound()">
+            <div class="banner-icon">
+              <app-icon name="alert-circle" [size]="18" />
+            </div>
+            <div class="banner-body">
+              <span class="banner-text">{{ loginErrorMessage() }}</span>
+              @if (isAccountNotFound()) {
+                <button type="button" class="btn-create-now-pill" (click)="switchToRegisterWithMobile()">
+                  <span>Create Account Now</span>
+                  <app-icon name="arrow-right" [size]="13" />
+                </button>
+              }
+            </div>
+          </div>
+        }
+
         <form (ngSubmit)="handleLogin()" class="auth-form">
           <!-- Mobile Number Input -->
           <div class="input-field-group">

@@ -84,37 +84,47 @@ export class App {
     this.showSplash.set(false);
 
     if (this.platformService.isAppMode()) {
-      let savedLoc: string | null = null;
-      try {
-        if (typeof localStorage !== 'undefined') {
-          savedLoc = localStorage.getItem('tbzb_saved_location');
-        }
-      } catch (e) {}
-
-      if (!savedLoc) {
-        // Step 2: Location Capturing Screen
-        this.showLocationScreen.set(true);
+      // Step 2: Direct Create Account screen for new users right after splash screen
+      if (!this.authService.isLoggedIn()) {
+        this.showAuthScreen.set(true);
       } else {
-        this.platformService.userLocationName.set(savedLoc);
-        // If location is saved, check if user needs to login
-        if (!this.authService.isLoggedIn()) {
-          // Step 3: Auth Screen
-          this.showAuthScreen.set(true);
+        let savedLoc: string | null = null;
+        try {
+          if (typeof localStorage !== 'undefined') {
+            savedLoc = localStorage.getItem('tbzb_saved_location');
+          }
+        } catch (e) {}
+
+        if (!savedLoc) {
+          this.showLocationScreen.set(true);
+        } else {
+          this.platformService.userLocationName.set(savedLoc);
+          this.updateThemeColor('#092819');
         }
       }
     }
   }
 
-  onLocationConfirmed(location: string): void {
-    this.showLocationScreen.set(false);
-    // After location is captured, check auth
-    if (!this.authService.isLoggedIn()) {
-      this.showAuthScreen.set(true);
-    }
-  }
-
   onAuthFinished(): void {
     this.showAuthScreen.set(false);
+    // Jab account open ho jaye -> Beautiful automatic Google Map live location screen
+    this.showLocationScreen.set(true);
+  }
+
+  onLocationConfirmed(location: string): void {
+    this.showLocationScreen.set(false);
+    this.platformService.userLocationName.set(location);
+    // Real location confirmed -> Home page statusbar color matched with header background (#092819)
+    this.updateThemeColor('#092819');
+  }
+
+  private updateThemeColor(color: string): void {
+    if (typeof document !== 'undefined') {
+      const metaTheme = document.querySelector('meta[name="theme-color"]');
+      if (metaTheme) {
+        metaTheme.setAttribute('content', color);
+      }
+    }
   }
 
   openHoursModal(): void {

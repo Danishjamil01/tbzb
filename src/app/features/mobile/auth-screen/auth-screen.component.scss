@@ -114,6 +114,78 @@
   }
 }
 
+/* Prominent Error / Not-Found Banner */
+.auth-error-banner {
+  background: #FEF2F2;
+  border: 1.5px solid #F87171;
+  border-radius: 14px;
+  padding: 12px 14px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  animation: fadeInDown 0.25s ease-out;
+
+  .banner-icon {
+    color: #DC2626;
+    margin-top: 1px;
+    flex-shrink: 0;
+  }
+
+  .banner-body {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1;
+  }
+
+  .banner-text {
+    font-size: 13px;
+    font-weight: 600;
+    color: #991B1B;
+    line-height: 1.4;
+  }
+
+  .btn-create-now-pill {
+    align-self: flex-start;
+    background: #DC2626;
+    color: #FFFFFF;
+    border: none;
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 12px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(220, 38, 38, 0.25);
+    transition: transform 0.15s ease;
+
+    &:active {
+      transform: scale(0.96);
+    }
+  }
+
+  &.not-found {
+    background: #FFFBEB;
+    border-color: #F59E0B;
+
+    .banner-icon {
+      color: #D97706;
+    }
+
+    .banner-text {
+      color: #92400E;
+    }
+
+    .btn-create-now-pill {
+      background: #0F472B;
+      box-shadow: 0 2px 8px rgba(15, 71, 43, 0.25);
+    }
+  }
+}
+
 /* Form */
 .auth-form {
   display: flex;

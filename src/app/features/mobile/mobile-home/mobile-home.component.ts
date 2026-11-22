@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { PlatformService } from '../../../core/services/platform.service';
 import { MenuService } from '../../../core/services/menu.service';
@@ -14,10 +14,20 @@ import { InrPipe } from '../../../shared/pipes/inr.pipe';
   templateUrl: './mobile-home.component.html',
   styleUrl: './mobile-home.component.scss'
 })
-export class MobileHomeComponent {
+export class MobileHomeComponent implements OnInit {
   platformService = inject(PlatformService);
   menuService = inject(MenuService);
   cartService = inject(CartService);
+
+  ngOnInit(): void {
+    // Match mobile statusbar color with home page header background (#092819)
+    if (typeof document !== 'undefined') {
+      const meta = document.querySelector('meta[name="theme-color"]');
+      if (meta) {
+        meta.setAttribute('content', '#092819');
+      }
+    }
+  }
 
   featuredItems = this.menuService.featuredItems;
   kunafaProduct = this.menuService.kunafaProduct;

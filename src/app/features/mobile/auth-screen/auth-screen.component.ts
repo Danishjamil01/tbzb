@@ -20,9 +20,14 @@ export class AuthScreenComponent {
 
   @Output() authFinished = new EventEmitter<void>();
 
-  mode = signal<AuthMode>('login');
+  // Default to 'register' (Create Account) for new users right after splash screen
+  mode = signal<AuthMode>('register');
   isDismissing = signal<boolean>(false);
   showPassword = signal<boolean>(false);
+
+  // In-form error message state
+  loginErrorMessage = signal<string | null>(null);
+  isAccountNotFound = signal<boolean>(false);
 
   // Form Fields
   loginMobile: string = '';
@@ -38,6 +43,15 @@ export class AuthScreenComponent {
   switchMode(newMode: AuthMode): void {
     this.mode.set(newMode);
     this.showPassword.set(false);
+    this.loginErrorMessage.set(null);
+    this.isAccountNotFound.set(false);
+  }
+
+  switchToRegisterWithMobile(): void {
+    this.regMobile = this.loginMobile;
+    this.loginErrorMessage.set(null);
+    this.isAccountNotFound.set(false);
+    this.mode.set('register');
   }
 
   togglePasswordVisibility(): void {
@@ -45,11 +59,16 @@ export class AuthScreenComponent {
   }
 
   async handleLogin(): Promise<void> {
+    this.loginErrorMessage.set(null);
+    this.isAccountNotFound.set(false);
+
     if (!this.loginMobile || this.loginMobile.length !== 10) {
+      this.loginErrorMessage.set('Kripya apna 10-digit mobile number enter karein.');
       this.toastService.show('Please enter a valid 10-digit mobile number', 'warning');
       return;
     }
     if (!this.loginPassword) {
+      this.loginErrorMessage.set('Kripya apna password enter karein.');
       this.toastService.show('Please enter your password', 'warning');
       return;
     }
@@ -58,6 +77,10 @@ export class AuthScreenComponent {
     if (res.success) {
       this.dismiss();
     } else {
+      this.loginErrorMessage.set(res.message);
+      if (res.message.includes('nahi mila')) {
+        this.isAccountNotFound.set(true);
+      }
       this.toastService.show(res.message, 'error');
     }
   }

@@ -128,7 +128,10 @@ export class AuthService {
       this.isLoading.set(false);
 
       if (!res.ok) {
-        return { success: false, message: 'Account not found. Please sign up first.' };
+        return {
+          success: false,
+          message: 'Is mobile number par koi account nahi mila! Pehle apna account create kijiye.'
+        };
       }
 
       const doc = await res.json();
