@@ -181,15 +181,15 @@ import { AuthService } from '../../core/services/auth.service';
                   <button
                     type="button"
                     class="btn-gps-fetch"
-                    (click)="fetchCurrentLocation()"
+                    (click)="fetchCurrentLocation(true)"
                     [disabled]="isLocating()"
                   >
                     @if (isLocating()) {
                       <span class="spinner-dot"></span>
-                      <span>Verifying Bidar Location...</span>
+                      <span>Detecting Live GPS...</span>
                     } @else {
                       <app-icon name="map-pin" [size]="15" />
-                      <span>📍 Verify My Live Location in Bidar (Required)</span>
+                      <span>📍 Auto-Detect Live Location (Optional)</span>
                     }
                   </button>
                 }
@@ -211,21 +211,19 @@ import { AuthService } from '../../core/services/auth.service';
               </div>
 
               <div class="payment-tabs">
-                <label
-                  class="payment-tab"
-                  [class.selected]="checkoutForm.get('paymentMethod')?.value === 'upi'"
+                <div
+                  class="payment-tab disabled-tab"
+                  (click)="onSelectOnlinePayment($event)"
                 >
-                  <input type="radio" formControlName="paymentMethod" value="upi" class="sr-only" />
-                  <div class="tab-radio-circle">
-                    @if (checkoutForm.get('paymentMethod')?.value === 'upi') {
-                      <span class="inner-dot"></span>
-                    }
-                  </div>
+                  <div class="tab-radio-circle"></div>
                   <div class="tab-meta">
-                    <strong>Online UPI (Scan QR)</strong>
+                    <div class="payment-title-row">
+                      <strong>Online UPI (Scan QR)</strong>
+                      <span class="coming-soon-badge">Coming Soon</span>
+                    </div>
                     <span>Google Pay, PhonePe, Paytm</span>
                   </div>
-                </label>
+                </div>
 
                 <label
                   class="payment-tab"
@@ -238,44 +236,14 @@ import { AuthService } from '../../core/services/auth.service';
                     }
                   </div>
                   <div class="tab-meta">
-                    <strong>Cash on Delivery (COD)</strong>
+                    <div class="payment-title-row">
+                      <strong>Cash on Delivery (COD)</strong>
+                      <span class="active-badge">Active</span>
+                    </div>
                     <span>Pay cash to delivery rider</span>
                   </div>
                 </label>
               </div>
-
-              <!-- Compact UPI QR Code Block (Only when UPI selected) -->
-              @if (checkoutForm.get('paymentMethod')?.value === 'upi') {
-                <div class="qr-compact-box">
-                  <div class="qr-display-container">
-                    <img
-                      src="images/myqr.jpeg"
-                      alt="The Bite Zone UPI QR Code"
-                      class="qr-image"
-                    />
-                    <div class="qr-badge">The Bite Zone QR</div>
-                  </div>
-
-                  <div class="qr-content-pane">
-                    <div class="qr-amount-pill">
-                      Pay Exact Amount: <strong>{{ calculation().total | inr }}</strong>
-                    </div>
-                    <p class="qr-helper">
-                      Scan with GPay, PhonePe, or Paytm and send payment screenshot on WhatsApp.
-                    </p>
-                    <div class="utr-wrap">
-                      <label for="upiTxnId">UTR / UPI Ref No. <span class="opt">(Optional)</span></label>
-                      <input
-                        id="upiTxnId"
-                        type="text"
-                        formControlName="upiTransactionId"
-                        placeholder="e.g. 12-digit transaction ID"
-                        class="form-control"
-                      />
-                    </div>
-                  </div>
-                </div>
-              }
             </div>
 
             <!-- 4. Total & Submit on WhatsApp -->
@@ -300,21 +268,6 @@ import { AuthService } from '../../core/services/auth.service';
                 >
                   <app-icon name="alert-circle" [size]="18" />
                   <span>Delivery Not Available Outside Bidar</span>
-                </button>
-              } @else if (!userLocation()) {
-                <button
-                  type="button"
-                  class="btn-submit btn-verify-prompt"
-                  (click)="fetchCurrentLocation()"
-                  [disabled]="isLocating()"
-                >
-                  @if (isLocating()) {
-                    <span class="spinner-dot"></span>
-                    <span>Verifying Bidar Location...</span>
-                  } @else {
-                    <app-icon name="map-pin" [size]="18" />
-                    <span>📍 Verify Bidar Location to Order</span>
-                  }
                 </button>
               } @else {
                 <button
@@ -779,6 +732,44 @@ import { AuthService } from '../../core/services/auth.service';
         border-color: #0F472B;
         background: rgba(15, 71, 43, 0.05);
       }
+
+      &.disabled-tab {
+        opacity: 0.85;
+        background: #F3F4F6;
+        cursor: pointer;
+        border-style: dashed;
+        border-color: #D1D5DB;
+        &:hover {
+          border-color: #F59E0B;
+        }
+      }
+
+      .payment-title-row {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex-wrap: wrap;
+      }
+
+      .coming-soon-badge {
+        font-size: 9px;
+        font-weight: 800;
+        background: #FEF3C7;
+        color: #B45309;
+        padding: 2px 6px;
+        border-radius: 4px;
+        letter-spacing: 0.3px;
+      }
+
+      .active-badge {
+        font-size: 9px;
+        font-weight: 800;
+        background: #DCFCE7;
+        color: #15803D;
+        padding: 2px 6px;
+        border-radius: 4px;
+        letter-spacing: 0.3px;
+      }
     }
 
     .sr-only {
@@ -999,15 +990,33 @@ export class CheckoutModalComponent {
     effect(() => {
       const isOpen = this.cartService.isCheckoutModalOpen();
       const user = this.authService.currentUser();
-      if (isOpen && user) {
-        if (!this.checkoutForm.get('fullName')?.value && user.name) {
-          this.checkoutForm.patchValue({ fullName: user.name });
+      if (isOpen) {
+        if (user) {
+          if (!this.checkoutForm.get('fullName')?.value && user.name) {
+            this.checkoutForm.patchValue({ fullName: user.name });
+          }
+          if (!this.checkoutForm.get('mobileNumber')?.value && user.mobileNumber) {
+            this.checkoutForm.patchValue({ mobileNumber: user.mobileNumber });
+          }
+          if (!this.checkoutForm.get('areaLocality')?.value && user.savedAddress) {
+            this.checkoutForm.patchValue({ areaLocality: user.savedAddress });
+          }
         }
-        if (!this.checkoutForm.get('mobileNumber')?.value && user.mobileNumber) {
-          this.checkoutForm.patchValue({ mobileNumber: user.mobileNumber });
+        const savedLoc = this.platformService.userLocationName();
+        if (savedLoc && !this.checkoutForm.get('areaLocality')?.value) {
+          this.checkoutForm.patchValue({ areaLocality: savedLoc });
         }
-        if (!this.checkoutForm.get('areaLocality')?.value && user.savedAddress) {
-          this.checkoutForm.patchValue({ areaLocality: user.savedAddress });
+        const coords = this.platformService.userCoordinates();
+        if (coords && !this.userLocation()) {
+          this.userLocation.set(coords);
+          const dist = this.calculateDistanceKm(this.config.location.latitude, this.config.location.longitude, coords.lat, coords.lng);
+          const rDist = Number(dist.toFixed(1));
+          this.userDistanceKm.set(rDist);
+          if (dist > this.config.location.maxDeliveryRadiusKm) {
+            this.isOutsideBidar.set(true);
+          } else {
+            this.isOutsideBidar.set(false);
+          }
         }
       }
     });
@@ -1036,13 +1045,34 @@ export class CheckoutModalComponent {
     flatNumber: ['', Validators.required],
     areaLocality: ['', Validators.required],
     landmark: [''],
-    paymentMethod: ['upi', Validators.required],
+    paymentMethod: ['cod', Validators.required],
     upiTransactionId: ['']
   });
 
   isFieldInvalid(fieldName: string): boolean {
     const field = this.checkoutForm.get(fieldName);
     return !!(field && field.invalid && (field.dirty || field.touched));
+  }
+
+  onSelectOnlinePayment(event: Event): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.checkoutForm.patchValue({ paymentMethod: 'cod' });
+    this.toastService.show(
+      'Online UPI is Coming Soon! Please proceed with Cash on Delivery (COD).',
+      'info',
+      'Coming Soon'
+    );
+  }
+
+  isForbiddenOutsideCity(text: string): boolean {
+    const forbidden = [
+      'hyderabad', 'bengaluru', 'bangalore', 'secunderabad', 'mumbai',
+      'delhi', 'pune', 'gulbarga', 'kalaburagi', 'humnabad', 'bhalki',
+      'aurad', 'basavakalyan', 'chennai', 'kolkata'
+    ];
+    const lower = (text || '').toLowerCase().trim();
+    return forbidden.some(city => lower.includes(city));
   }
 
   calculateDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
@@ -1057,10 +1087,12 @@ export class CheckoutModalComponent {
     return R * c;
   }
 
-  fetchCurrentLocation(): void {
+  fetchCurrentLocation(showToast: boolean = true): void {
     if (typeof navigator === 'undefined' || !navigator.geolocation) {
       this.locationError.set('Geolocation is not supported by your browser.');
-      this.toastService.show('Geolocation is not supported by your browser.', 'error');
+      if (showToast) {
+        this.toastService.show('Geolocation is not supported. Please enter your Bidar address manually.', 'info');
+      }
       return;
     }
 
@@ -1072,6 +1104,7 @@ export class CheckoutModalComponent {
         const lat = Number(position.coords.latitude.toFixed(6));
         const lng = Number(position.coords.longitude.toFixed(6));
         this.userLocation.set({ lat, lng });
+        this.platformService.userCoordinates.set({ lat, lng });
 
         // Calculate distance from TBZB Kitchen in Bidar
         const distance = this.calculateDistanceKm(
@@ -1087,34 +1120,39 @@ export class CheckoutModalComponent {
           this.isOutsideBidar.set(true);
           this.isLocating.set(false);
           this.toastService.show(
-            `Delivery Unavailable: Your location is ${roundedDist} km away. We only deliver within Bidar.`,
+            `Delivery Unavailable: Your GPS is ${roundedDist} km away. We only deliver within Bidar.`,
             'error'
           );
         } else {
           this.isOutsideBidar.set(false);
           this.isLocating.set(false);
-          this.toastService.show(
-            `Live Bidar location verified (${roundedDist} km from TBZB kitchen)! 📍`,
-            'success'
-          );
+          if (showToast) {
+            this.toastService.show(
+              `Live Bidar location verified (${roundedDist} km from TBZB kitchen)! 📍`,
+              'success'
+            );
+          }
         }
       },
       (error) => {
         this.isLocating.set(false);
-        let errorMsg = 'Could not fetch your location.';
+        let errorMsg = 'Could not fetch your GPS location.';
         if (error.code === error.PERMISSION_DENIED) {
-          errorMsg = 'Location permission was denied. Please enter your Bidar address manually.';
+          errorMsg = 'Location permission was not granted. Using your manual Bidar address.';
         } else if (error.code === error.POSITION_UNAVAILABLE) {
-          errorMsg = 'Location information is currently unavailable.';
+          errorMsg = 'Location signal unavailable. Using manual Bidar address.';
         } else if (error.code === error.TIMEOUT) {
-          errorMsg = 'Location request timed out. Please try again.';
+          errorMsg = 'Location request timed out. Using manual Bidar address.';
         }
         this.locationError.set(errorMsg);
-        this.toastService.show(errorMsg, 'error');
+        // Only show toast if user explicitly clicked Re-check button and not permission denied
+        if (showToast && error.code !== error.PERMISSION_DENIED) {
+          this.toastService.show(errorMsg, 'info');
+        }
       },
       {
         enableHighAccuracy: true,
-        timeout: 10000,
+        timeout: 8000,
         maximumAge: 0
       }
     );
@@ -1143,22 +1181,14 @@ export class CheckoutModalComponent {
 
     const formValues = this.checkoutForm.value;
 
-    // Strict Geofence check: Customer outside Bidar cannot order delivery!
-    if (this.isOutsideBidar()) {
+    // Check if entered address explicitly points outside Bidar (e.g. Hyderabad, Bengaluru, etc.)
+    const fullAddress = `${formValues.flatNumber || ''} ${formValues.areaLocality || ''} ${formValues.landmark || ''}`;
+    if (this.isForbiddenOutsideCity(fullAddress) || this.isOutsideBidar()) {
       this.toastService.show(
-        `Cannot place delivery order: Your location is ${this.userDistanceKm()} km outside Bidar. Delivery is strictly limited to Bidar city limits.`,
-        'error'
+        `Cannot place delivery order: Delivery is strictly limited to Bidar city limits.`,
+        'error',
+        'Outside Delivery Area'
       );
-      return;
-    }
-
-    // Mandatory Location Check: Customer must verify location in Bidar
-    if (!this.userLocation()) {
-      this.toastService.show(
-        'Please verify your live location in Bidar to place the order 📍',
-        'error'
-      );
-      this.fetchCurrentLocation();
       return;
     }
 

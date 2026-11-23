@@ -3,7 +3,7 @@
   <div class="top-nav-bar">
     <div class="brand-top-header">
       <div class="brand-logo-wrap">
-        <app-icon name="chef-hat" [size]="22" extraClass="chef-icon" />
+        <app-icon name="chef-hat" [size]="20" extraClass="chef-icon" />
         <span class="yellow-badge">TBZB</span>
       </div>
       <div class="brand-text-col">
@@ -12,10 +12,10 @@
       </div>
     </div>
 
-    <button class="skip-btn" (click)="skipToBidar()">Skip</button>
+    <button class="skip-btn" (click)="skipToBidar()">Bidar Default</button>
   </div>
 
-  <!-- Live Google Map View with Animated Center Pin -->
+  <!-- Live Google Map View with Center Pin -->
   <div class="google-map-container">
     @if (safeMapUrl()) {
       <iframe
@@ -42,67 +42,90 @@
     <div class="floating-gps-badge" [class.locked]="!isLoadingGps()">
       <span class="satellite-dot" [class.pulse]="isLoadingGps()"></span>
       <span class="badge-text">
-        {{ isLoadingGps() ? 'Connecting to Google Maps GPS...' : '🛰️ Live GPS Locked • Accurate' }}
+        {{ isLoadingGps() ? 'Connecting GPS Satellite...' : (isOutsideBidar() ? '⚠️ Live GPS Outside Bidar' : '🛰️ Bidar Delivery Zone Verified') }}
       </span>
     </div>
   </div>
 
-  <!-- Location Details & Action Container -->
+  <!-- Location Verification & Editable Area Section -->
   <div class="location-details-section">
-    @if (isLoadingGps()) {
-      <!-- Detecting State -->
-      <div class="detecting-box">
-        <div class="gps-loader-ring"></div>
-        <h3 class="status-title">Detecting Real Live Location</h3>
-        <p class="status-subtitle">Fetching your exact street & doorstep coordinates...</p>
-      </div>
-    } @else {
-      <!-- Location Found State -->
-      <div class="location-found-box">
-        <div class="success-icon-wrap">
-          <app-icon name="check-circle" [size]="26" />
+    <!-- Warning Banner if User is in Hyderabad, Bengaluru, etc. -->
+    @if (isOutsideBidar()) {
+      <div class="outside-bidar-banner">
+        <div class="banner-icon-col">
+          <app-icon name="alert-circle" [size]="20" />
         </div>
-        <div class="found-meta">
-          <span class="found-label">DELIVERING TO YOUR DOORSTEP</span>
-          <h3 class="found-title">{{ detectedLocationName() }}</h3>
-          @if (detectedCoords(); as c) {
-            <span class="coords-text">📍 Coordinates: {{ c.lat }}°N, {{ c.lng }}°E</span>
-          }
-        </div>
-        <div class="auto-proceed-pill">
-          <span>Taking you to Menu in 2s...</span>
+        <div class="banner-text-col">
+          <strong>Outside Bidar Delivery Zone</strong>
+          <p>Your GPS detected: <strong>{{ outsideCityName() }} ({{ outsideDistanceKm() }} km away)</strong>. We only deliver in Bidar city limits. Please select your Bidar delivery address below:</p>
         </div>
       </div>
     }
 
-    <!-- Actions Section -->
-    <div class="actions-group">
-      <!-- 1. Confirm Now Button -->
-      <button
-        class="btn-confirm-location"
-        (click)="confirmNow()"
-        [disabled]="isLoadingGps()"
-      >
-        <span>Confirm & Open Menu</span>
-        <app-icon name="arrow-right" [size]="18" />
-      </button>
-
-      <!-- 2. Manual Area Selector & Re-check Row -->
-      <div class="secondary-actions-row">
-        <button class="btn-select-area" (click)="showPopularAreas.set(true)">
-          <app-icon name="search" [size]="15" />
-          <span>Select Bidar Area Manually</span>
-        </button>
-
-        <button class="btn-recheck-gps" (click)="detectLiveLocation()" [disabled]="isLoadingGps()" title="Re-check GPS">
-          <app-icon name="refresh-cw" [size]="15" [extraClass]="isLoadingGps() ? 'spin' : ''" />
-          <span>Re-detect</span>
+    <!-- Editable Location Input Card -->
+    <div class="location-input-card">
+      <div class="card-title-row">
+        <span class="label-text">YOUR DELIVERY AREA IN BIDAR</span>
+        <button class="btn-detect-again" (click)="detectLiveLocation()" [disabled]="isLoadingGps()">
+          <app-icon name="refresh-cw" [size]="13" [extraClass]="isLoadingGps() ? 'spin' : ''" />
+          <span>{{ isLoadingGps() ? 'Detecting...' : 'Re-check GPS' }}</span>
         </button>
       </div>
+
+      <!-- Editable Area Input Field -->
+      <div class="input-field-wrapper">
+        <app-icon name="map-pin" [size]="18" extraClass="pin-field-icon" />
+        <input
+          type="text"
+          [(ngModel)]="customAreaInput"
+          placeholder="Enter Bidar area (e.g. Gandhi Gunj, Naubad...)"
+          class="area-text-input"
+          autocomplete="off"
+        />
+        @if (customAreaInput) {
+          <button class="btn-clear-input" (click)="customAreaInput = ''">
+            <app-icon name="x" [size]="15" />
+          </button>
+        }
+      </div>
+
+      <!-- Quick Locality Chips (1-tap selection) -->
+      <div class="quick-chips-strip">
+        <span class="chips-label">Popular Areas:</span>
+        <div class="chips-scroll-row">
+          @for (chip of quickChips; track chip) {
+            <button
+              type="button"
+              class="quick-pill-btn"
+              [class.active]="customAreaInput.includes(chip)"
+              (click)="selectQuickChip(chip)"
+            >
+              {{ chip }}
+            </button>
+          }
+          <button type="button" class="quick-pill-btn btn-more" (click)="showPopularAreas.set(true)">
+            + All Areas
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Confirm Button (Explicit User Tap Only - No Auto-Redirect!) -->
+    <div class="actions-group">
+      <button
+        type="button"
+        class="btn-confirm-location"
+        (click)="confirmLocationAndProceed()"
+        [disabled]="isLoadingGps()"
+      >
+        <span>Confirm Location & Open Menu</span>
+        <app-icon name="arrow-right" [size]="18" />
+      </button>
+      <p class="satisfaction-hint">Review or edit your delivery locality above, then tap Confirm.</p>
     </div>
   </div>
 
-  <!-- Popular Bidar Areas Picker Modal / Drawer -->
+  <!-- All Bidar Areas Drawer -->
   @if (showPopularAreas()) {
     <div class="areas-drawer-backdrop" (click)="showPopularAreas.set(false)"></div>
     <div class="areas-drawer">
@@ -122,7 +145,7 @@
               <span class="area-pin-dot"></span>
               <span class="area-name">{{ area }}</span>
             </div>
-            <span class="area-tag">15–25 Mins</span>
+            <span class="area-tag">Bidar • 20 Mins</span>
           </button>
         }
       </div>

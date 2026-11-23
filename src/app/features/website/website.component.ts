@@ -33,3 +33,4 @@ import { FloatingWhatsappComponent } from './floating-whatsapp/floating-whatsapp
 export class WebsiteComponent {
   @Output() openHoursModal = new EventEmitter<void>();
 }
+

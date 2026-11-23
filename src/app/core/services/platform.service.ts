@@ -152,7 +152,7 @@ export class PlatformService {
     try {
       const data = localStorage.getItem('tbzb_customer_last_order');
       if (data) return JSON.parse(data);
-    } catch (e) {}
+    } catch (e) { }
     return null;
   }
 
@@ -162,7 +162,7 @@ export class PlatformService {
       if (typeof window !== 'undefined') {
         localStorage.setItem('tbzb_customer_last_order', JSON.stringify(order));
       }
-    } catch (e) {}
+    } catch (e) { }
   }
 
   setTab(tab: AppTab): void {

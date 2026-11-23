@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { PlatformService } from '../../../core/services/platform.service';
+import { ToastService } from '../../../core/services/toast.service';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 
 @Component({
@@ -15,6 +16,7 @@ import { IconComponent } from '../../../shared/components/icon/icon.component';
 export class LocationScreenComponent implements OnInit, OnDestroy {
   platformService = inject(PlatformService);
   private sanitizer = inject(DomSanitizer);
+  private toastService = inject(ToastService);
 
   @Output() locationConfirmed = new EventEmitter<string>();
 
@@ -25,7 +27,13 @@ export class LocationScreenComponent implements OnInit, OnDestroy {
   safeMapUrl = signal<SafeResourceUrl | null>(null);
   showPopularAreas = signal<boolean>(false);
 
-  private autoConfirmTimer: any = null;
+  // Outside Bidar Geofence state
+  isOutsideBidar = signal<boolean>(false);
+  outsideDistanceKm = signal<number | null>(null);
+  outsideCityName = signal<string | null>(null);
+
+  // Editable delivery area chosen by the customer
+  customAreaInput: string = 'Gandhi Gunj, Bidar';
 
   readonly bidarAreas = [
     'Gandhi Gunj',
@@ -37,67 +45,67 @@ export class LocationScreenComponent implements OnInit, OnDestroy {
     'Civil Hospital Road',
     'Bidar Fort Area',
     'Halladkeri',
-    'Manhalli Road'
+    'Manhalli Road',
+    'Noor Khan Taleem',
+    'Chidri Road',
+    'Udgir Road'
   ];
 
+  readonly quickChips = [
+    'Gandhi Gunj',
+    'Naubad',
+    'Shivnagar',
+    'Gumpa',
+    'Mailoor',
+    'Bidar Fort Area'
+  ];
+
+  // Bidar Kitchen Coordinates (TBZB Kitchen Center)
+  private readonly BIDAR_KITCHEN_LAT = 17.9104;
+  private readonly BIDAR_KITCHEN_LNG = 77.5199;
+  private readonly MAX_DELIVERY_RADIUS_KM = 25; // Bidar city limits
+
   ngOnInit(): void {
-    // 1. If coordinates already available from PlatformService, use them immediately
     const existingCoords = this.platformService.userCoordinates();
     if (existingCoords) {
       this.updateMapCoordinates(existingCoords.lat, existingCoords.lng);
       this.detectedCoords.set(existingCoords);
     } else {
-      // Default to initial view
-      this.updateMapCoordinates(17.9104, 77.5199);
+      this.updateMapCoordinates(this.BIDAR_KITCHEN_LAT, this.BIDAR_KITCHEN_LNG);
     }
 
-    // 2. Automatically trigger live location detection immediately
+    // Trigger live GPS detection
     this.detectLiveLocation();
   }
 
-  async detectLiveLocation(): Promise<void> {
+  calculateDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
+    const R = 6371; // Earth radius in km
+    const dLat = (lat2 - lat1) * (Math.PI / 180);
+    const dLon = (lon2 - lon1) * (Math.PI / 180);
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
+      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  }
+
+  isForbiddenOutsideCity(text: string): boolean {
+    const forbidden = [
+      'hyderabad', 'bengaluru', 'bangalore', 'secunderabad', 'mumbai',
+      'delhi', 'pune', 'gulbarga', 'kalaburagi', 'humnabad', 'bhalki',
+      'aurad', 'basavakalyan', 'chennai', 'kolkata'
+    ];
+    const lower = (text || '').toLowerCase().trim();
+    return forbidden.some(city => lower.includes(city));
+  }
+
+  detectLiveLocation(): void {
     this.isLoadingGps.set(true);
-    this.detectedLocationName.set(null);
-    if (this.autoConfirmTimer) clearTimeout(this.autoConfirmTimer);
+    this.isOutsideBidar.set(false);
 
-    let ipResolvedLoc: { name: string; lat: number; lng: number } | null = null;
-
-    // Step A: Fast worldwide IP Geolocation (instant baseline anywhere on Earth)
-    try {
-      const ipController = new AbortController();
-      const ipTimeout = setTimeout(() => ipController.abort(), 3500);
-      const ipRes = await fetch('https://ipwho.is/', { signal: ipController.signal });
-      clearTimeout(ipTimeout);
-
-      if (ipRes.ok) {
-        const ipData = await ipRes.json();
-        if (ipData.success) {
-          const city = ipData.city || '';
-          const region = ipData.region || ipData.country || '';
-          const fullName = region ? `${city}, ${region}` : city;
-          ipResolvedLoc = {
-            name: fullName,
-            lat: Number(ipData.latitude),
-            lng: Number(ipData.longitude)
-          };
-
-          // Update map and coordinates immediately to user's real current location
-          this.updateMapCoordinates(ipResolvedLoc.lat, ipResolvedLoc.lng);
-          this.detectedCoords.set({ lat: ipResolvedLoc.lat, lng: ipResolvedLoc.lng });
-          this.detectedLocationName.set(fullName);
-        }
-      }
-    } catch (e) {
-      // Ignore IP timeout, proceed to GPS
-    }
-
-    // Step B: Precise Device GPS Geolocation
     if (typeof navigator === 'undefined' || !navigator.geolocation) {
-      if (ipResolvedLoc) {
-        this.handleLocationFound(ipResolvedLoc.name, ipResolvedLoc.lat, ipResolvedLoc.lng);
-      } else {
-        this.handleLocationFound('Bidar, Karnataka', 17.9104, 77.5199);
-      }
+      this.fallbackToBidarDefault('Geolocation not supported. Defaulting to Bidar.');
       return;
     }
 
@@ -110,11 +118,15 @@ export class LocationScreenComponent implements OnInit, OnDestroy {
         this.platformService.userCoordinates.set({ lat, lng });
         this.updateMapCoordinates(lat, lng);
 
-        try {
-          // Reverse geocode via BigDataCloud
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 5000);
+        // Distance check from TBZB Bidar Kitchen
+        const distance = this.calculateDistanceKm(this.BIDAR_KITCHEN_LAT, this.BIDAR_KITCHEN_LNG, lat, lng);
+        const roundedDist = Math.round(distance);
 
+        let resolvedName = 'Bidar, Karnataka';
+
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 4000);
           const res = await fetch(
             `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=en`,
             { signal: controller.signal }
@@ -123,94 +135,95 @@ export class LocationScreenComponent implements OnInit, OnDestroy {
 
           if (res.ok) {
             const data = await res.json();
-            const locality = data.locality || data.suburb || data.neighbourhood || data.city || '';
-            const city = data.city || data.principalSubdivision || data.countryName || '';
-            const locationName = locality && locality !== city ? `${locality}, ${city}` : (city || 'Current Location');
-            this.handleLocationFound(locationName, lat, lng);
-            return;
+            const locality = data.locality || data.suburb || data.neighbourhood || '';
+            const city = data.city || data.principalSubdivision || '';
+            resolvedName = locality && locality !== city ? `${locality}, ${city}` : (city || 'Current Location');
           }
         } catch (e) {
-          // BigDataCloud failed, try OpenStreetMap Nominatim as fallback
-          try {
-            const nomRes = await fetch(
-              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`,
-              { headers: { 'Accept-Language': 'en' } }
-            );
-            if (nomRes.ok) {
-              const nomData = await nomRes.json();
-              const addr = nomData.address || {};
-              const locality = addr.suburb || addr.neighbourhood || addr.residential || addr.road || addr.village || addr.town || '';
-              const city = addr.city || addr.town || addr.county || '';
-              const loc = locality && locality !== city ? `${locality}, ${city}` : (city || 'Current Location');
-              this.handleLocationFound(loc, lat, lng);
-              return;
-            }
-          } catch (ne) {}
+          // Geocode failed
         }
 
-        // If reverse geocoding services failed, use IP name or coordinates
-        if (ipResolvedLoc) {
-          this.handleLocationFound(ipResolvedLoc.name, lat, lng);
+        this.isLoadingGps.set(false);
+
+        if (distance > this.MAX_DELIVERY_RADIUS_KM) {
+          // User is physically outside Bidar (e.g. Hyderabad, Bengaluru)
+          this.isOutsideBidar.set(true);
+          this.outsideDistanceKm.set(roundedDist);
+          this.outsideCityName.set(resolvedName);
+          this.detectedLocationName.set(resolvedName);
+          // Pre-fill with a valid Bidar delivery area so they can select Bidar address if ordering for someone in Bidar
+          this.customAreaInput = 'Gandhi Gunj, Bidar';
         } else {
-          this.handleLocationFound('Current Location', lat, lng);
+          // User is in Bidar!
+          this.isOutsideBidar.set(false);
+          this.detectedLocationName.set(resolvedName);
+          this.customAreaInput = resolvedName.includes('Bidar') ? resolvedName : `${resolvedName}, Bidar`;
         }
       },
       (err) => {
-        // GPS denied or timed out -> use IP resolved real location!
-        if (ipResolvedLoc) {
-          this.handleLocationFound(ipResolvedLoc.name, ipResolvedLoc.lat, ipResolvedLoc.lng);
-        } else {
-          this.handleLocationFound('Bidar, Karnataka', 17.9104, 77.5199);
-        }
+        // GPS permission denied or timed out -> Safely fallback to Bidar, never Bengaluru!
+        this.fallbackToBidarDefault('GPS permission denied. Please select your Bidar delivery area.');
       },
-      { enableHighAccuracy: true, timeout: 8000 }
+      { enableHighAccuracy: true, timeout: 7000 }
     );
   }
 
-  private handleLocationFound(locationName: string, lat: number, lng: number): void {
+  private fallbackToBidarDefault(note: string): void {
     this.isLoadingGps.set(false);
-    this.detectedLocationName.set(locationName);
-    this.detectedCoords.set({ lat, lng });
-    this.platformService.userLocationName.set(locationName);
-
-    // Auto-confirm after 2 seconds to smoothly take user to Home Screen
-    this.autoConfirmTimer = setTimeout(() => {
-      this.confirmLocation(locationName);
-    }, 2200);
+    this.isOutsideBidar.set(false);
+    this.detectedLocationName.set('Bidar, Karnataka');
+    this.customAreaInput = 'Gandhi Gunj, Bidar';
+    this.updateMapCoordinates(this.BIDAR_KITCHEN_LAT, this.BIDAR_KITCHEN_LNG);
   }
 
-  confirmNow(): void {
-    if (this.autoConfirmTimer) clearTimeout(this.autoConfirmTimer);
-    const loc = this.detectedLocationName() || 'Bidar, Karnataka';
-    this.confirmLocation(loc);
+  selectQuickChip(chip: string): void {
+    this.customAreaInput = `${chip}, Bidar`;
+    this.isOutsideBidar.set(false);
   }
 
   chooseArea(area: string): void {
-    if (this.autoConfirmTimer) clearTimeout(this.autoConfirmTimer);
+    this.customAreaInput = `${area}, Bidar`;
     this.showPopularAreas.set(false);
-    this.confirmLocation(`${area}, Bidar`);
+    this.isOutsideBidar.set(false);
   }
 
   skipToBidar(): void {
-    if (this.autoConfirmTimer) clearTimeout(this.autoConfirmTimer);
-    const loc = this.detectedLocationName() || this.platformService.userLocationName() || 'Bidar, Karnataka';
-    this.confirmLocation(loc);
+    this.customAreaInput = 'Gandhi Gunj, Bidar';
+    this.confirmLocationAndProceed();
   }
 
-  private confirmLocation(locationName: string): void {
-    if (this.autoConfirmTimer) clearTimeout(this.autoConfirmTimer);
-    this.platformService.userLocationName.set(locationName);
+  confirmLocationAndProceed(): void {
+    const area = (this.customAreaInput || '').trim();
+
+    if (!area || area.length < 3) {
+      this.toastService.show('Please enter your delivery area in Bidar', 'warning');
+      return;
+    }
+
+    // Boundary Protection: Customer cannot type a non-Bidar city (Hyderabad, Bengaluru, etc.)
+    if (this.isForbiddenOutsideCity(area)) {
+      this.toastService.show(
+        'Delivery is strictly limited to Bidar city limits. Please select a Bidar delivery area.',
+        'error',
+        'Outside Delivery Zone'
+      );
+      this.customAreaInput = 'Gandhi Gunj, Bidar';
+      return;
+    }
+
+    const finalAddress = area.toLowerCase().includes('bidar') ? area : `${area}, Bidar`;
+    this.platformService.userLocationName.set(finalAddress);
 
     try {
       if (typeof localStorage !== 'undefined') {
-        localStorage.setItem('tbzb_saved_location', locationName);
+        localStorage.setItem('tbzb_saved_location', finalAddress);
       }
     } catch (e) {}
 
     this.isDismissing.set(true);
     setTimeout(() => {
-      this.locationConfirmed.emit(locationName);
-    }, 350);
+      this.locationConfirmed.emit(finalAddress);
+    }, 300);
   }
 
   private updateMapCoordinates(lat: number, lng: number): void {
@@ -218,9 +231,5 @@ export class LocationScreenComponent implements OnInit, OnDestroy {
     this.safeMapUrl.set(this.sanitizer.bypassSecurityTrustResourceUrl(rawUrl));
   }
 
-  ngOnDestroy(): void {
-    if (this.autoConfirmTimer) {
-      clearTimeout(this.autoConfirmTimer);
-    }
-  }
+  ngOnDestroy(): void {}
 }
