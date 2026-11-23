@@ -1,9 +1,9 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { BusinessStatusService } from '../../core/services/business-status.service';
-import { CartService } from '../../core/services/cart.service';
-import { InrPipe } from '../../shared/pipes/inr.pipe';
-import { IconComponent } from '../../shared/components/icon/icon.component';
+import { BusinessStatusService } from '../../../core/services/business-status.service';
+import { CartService } from '../../../core/services/cart.service';
+import { InrPipe } from '../../../shared/pipes/inr.pipe';
+import { IconComponent } from '../../../shared/components/icon/icon.component';
 
 @Component({
   selector: 'app-floating-whatsapp',

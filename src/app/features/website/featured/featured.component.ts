@@ -1,8 +1,8 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { MenuService } from '../../core/services/menu.service';
-import { FoodCardComponent } from '../food-card/food-card.component';
-import { IconComponent } from '../../shared/components/icon/icon.component';
+import { MenuService } from '../../../core/services/menu.service';
+import { FoodCardComponent } from '../../food-card/food-card.component';
+import { IconComponent } from '../../../shared/components/icon/icon.component';
 
 @Component({
   selector: 'app-featured',

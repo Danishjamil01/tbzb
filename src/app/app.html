@@ -1,94 +1,19 @@
-<!-- 1. Beautiful Clean Splash Screen (Image 1 Mockup) -->
-@if (showSplash()) {
-  <app-splash-screen (splashFinished)="onSplashFinished()"></app-splash-screen>
-}
-
-<!-- 2. Find Your Location Screen (Image 2 Mockup) -->
-@if (showLocationScreen()) {
-  <app-location-screen (locationConfirmed)="onLocationConfirmed($event)"></app-location-screen>
-}
-
-<!-- 3. Mobile Login & Registration Screen (Firestore Connected) -->
-@if (showAuthScreen()) {
-  <app-auth-screen (authFinished)="onAuthFinished()"></app-auth-screen>
-}
-
-<!-- 3. Dual Experience Shell -->
-@if (platformService.isAppMode()) {
-  <!-- ============================================ -->
-  <!-- VIEW A: DEDICATED MOBILE APP EXPERIENCE     -->
-  <!-- ============================================ -->
-  <div class="mobile-app-layout">
-    <!-- Top Mobile App Header -->
-    <app-mobile-header (openHoursModal)="openHoursModal()"></app-mobile-header>
-
-    <!-- Main Content Tab Switcher -->
-    <main class="mobile-app-main" id="mobile-main">
-      @switch (platformService.activeTab()) {
-        @case ('home') {
-          <app-mobile-home></app-mobile-home>
-        }
-        @case ('menu') {
-          <app-mobile-menu></app-mobile-menu>
-        }
-        @case ('orders') {
-          <app-mobile-orders></app-mobile-orders>
-        }
-        @case ('cart') {
-          <app-mobile-cart></app-mobile-cart>
-        }
-        @case ('more') {
-          <app-mobile-more (openAuth)="showAuthScreen.set(true)"></app-mobile-more>
-        }
-      }
-    </main>
-
-    <!-- Bottom Navigation Tabs -->
-    <app-bottom-nav></app-bottom-nav>
-  </div>
+<!-- ======================================================= -->
+<!-- DUAL MODULE ARCHITECTURE (SCREEN ADAPTIVE)              -->
+<!-- Big Screen (> 768px): WEBSITE MODULE                    -->
+<!-- Small Screen (<= 768px) & Mobile App: CUSTOMER MODULE   -->
+<!-- ======================================================= -->
+@if (platformService.isMobileScreen()) {
+  <!-- 1. CUSTOMER MODULE (Mobile Phones & Android App) -->
+  <app-customer (openHoursModal)="openHoursModal()"></app-customer>
 } @else {
-  <!-- ============================================ -->
-  <!-- VIEW B: FULL WEBSITE EXPERIENCE (BROWSER)   -->
-  <!-- ============================================ -->
-  <div class="website-layout">
-    <!-- Desktop Header -->
-    <app-header (openHoursModal)="openHoursModal()"></app-header>
-
-    <!-- Main Website Content -->
-    <main class="main-content" id="main-content">
-      <!-- Hero Section -->
-      <app-hero></app-hero>
-
-      <!-- Category Quick Navigation -->
-      <app-category-nav></app-category-nav>
-
-      <!-- Popular Delicacies Section -->
-      <app-featured></app-featured>
-
-      <!-- Special Signature Product: Kunafa Jar -->
-      <app-kunafa-spotlight></app-kunafa-spotlight>
-
-      <!-- Full Interactive Food Menu -->
-      <app-menu></app-menu>
-
-      <!-- About TBZB Cloud Kitchen -->
-      <app-about></app-about>
-
-      <!-- Contact, Location & Delivery Info -->
-      <app-contact></app-contact>
-    </main>
-
-    <!-- Footer -->
-    <app-footer></app-footer>
-
-    <!-- Floating WhatsApp on Web View -->
-    <app-floating-whatsapp></app-floating-whatsapp>
-  </div>
+  <!-- 2. WEBSITE MODULE (Desktop, Laptops & Tablets) -->
+  <app-website (openHoursModal)="openHoursModal()"></app-website>
 }
 
-<!-- ============================================ -->
-<!-- COMMON MODALS & OVERLAYS (APP & WEB)        -->
-<!-- ============================================ -->
+<!-- ======================================================= -->
+<!-- SHARED MODALS & OVERLAYS (Accessible by both modules)    -->
+<!-- ======================================================= -->
 <app-cart-drawer></app-cart-drawer>
 <app-food-modal></app-food-modal>
 <app-checkout-modal></app-checkout-modal>

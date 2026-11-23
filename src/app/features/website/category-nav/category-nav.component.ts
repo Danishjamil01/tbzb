@@ -1,8 +1,8 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { MenuService } from '../../core/services/menu.service';
-import { FoodCategory } from '../../core/models/menu.model';
-import { IconComponent } from '../../shared/components/icon/icon.component';
+import { MenuService } from '../../../core/services/menu.service';
+import { FoodCategory } from '../../../core/models/menu.model';
+import { IconComponent } from '../../../shared/components/icon/icon.component';
 
 @Component({
   selector: 'app-category-nav',

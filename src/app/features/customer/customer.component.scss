@@ -1,0 +1,16 @@
+.mobile-app-layout {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: #F8FAFC;
+  position: relative;
+  overflow-x: hidden;
+  max-width: 500px;
+  margin: 0 auto;
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.2);
+}
+
+.mobile-app-main {
+  flex: 1;
+  padding-bottom: 74px; /* Space for bottom nav */
+}

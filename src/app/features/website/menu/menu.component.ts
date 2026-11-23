@@ -1,10 +1,10 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { MenuService } from '../../core/services/menu.service';
-import { FoodCardComponent } from '../food-card/food-card.component';
-import { IconComponent } from '../../shared/components/icon/icon.component';
-import { DietType } from '../../core/models/menu.model';
+import { MenuService } from '../../../core/services/menu.service';
+import { FoodCardComponent } from '../../food-card/food-card.component';
+import { IconComponent } from '../../../shared/components/icon/icon.component';
+import { DietType } from '../../../core/models/menu.model';
 
 @Component({
   selector: 'app-menu',

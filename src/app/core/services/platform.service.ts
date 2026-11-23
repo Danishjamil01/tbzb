@@ -16,12 +16,27 @@ export class PlatformService {
   // Optional query param override for testing (e.g. ?mode=app)
   private readonly hasAppParam = typeof window !== 'undefined' && window.location.search.includes('mode=app');
 
-  // Strict Rule:
-  // Native APK/AAB App -> Opens App Layout ONLY.
-  // Installed PWA Standalone -> Opens App Layout ONLY.
-  // Any Web Browser (Mobile browser or Desktop browser) -> Opens Website Layout ONLY!
+  // Window width tracking for responsive screen mode
+  readonly windowWidth = signal<number>(typeof window !== 'undefined' ? window.innerWidth : 1200);
+
+  // Small screen (mobile device viewport <= 768px)
+  readonly isSmallScreen = computed<boolean>(() => {
+    return this.windowWidth() <= 768;
+  });
+
+  // Strict Rule requested by User:
+  // Native APK/AAB App / PWA / Small Screen (mobile phone <= 768px) -> Opens Customer Mobile App Module ONLY!
+  // Big Screen (Desktop / Laptop browser > 768px) -> Opens Full Website Module ONLY!
+  readonly isMobileScreen = computed<boolean>(() => {
+    if (this.isNative() || this.isStandalonePwa() || this.hasAppParam) {
+      return true;
+    }
+    return this.isSmallScreen();
+  });
+
+  // Alias for backward compatibility
   readonly isAppMode = computed<boolean>(() => {
-    return this.isNative() || this.isStandalonePwa() || this.hasAppParam;
+    return this.isMobileScreen();
   });
 
   // Active Mobile App Tab
@@ -40,6 +55,11 @@ export class PlatformService {
     this.fetchRealLocation();
 
     if (typeof window !== 'undefined') {
+      // Listen for window resize to reactively switch between Website and Customer Mobile App
+      window.addEventListener('resize', () => {
+        this.windowWidth.set(window.innerWidth);
+      });
+
       // Listen for storage changes (e.g. order placed in checkout modal)
       window.addEventListener('storage', (e) => {
         if (e.key === 'tbzb_customer_last_order') {

@@ -1,0 +1,48 @@
+<!-- ============================================ -->
+<!-- CUSTOMER MODULE: DEDICATED MOBILE APP        -->
+<!-- ============================================ -->
+
+<!-- 1. Minimalist Splash Screen (Image 1 Mockup) -->
+@if (showSplash()) {
+  <app-splash-screen (splashFinished)="onSplashFinished()"></app-splash-screen>
+}
+
+<!-- 2. Live GPS Google Map Radar Location Screen -->
+@if (showLocationScreen()) {
+  <app-location-screen (locationConfirmed)="onLocationConfirmed($event)"></app-location-screen>
+}
+
+<!-- 3. Mobile Account Sign In & Sign Up Screen (Firestore Connected) -->
+@if (showAuthScreen()) {
+  <app-auth-screen (authFinished)="onAuthFinished()"></app-auth-screen>
+}
+
+<!-- 4. Customer Mobile App Layout -->
+<div class="mobile-app-layout">
+  <!-- Top Mobile App Header -->
+  <app-mobile-header (openHoursModal)="openHoursModal.emit()"></app-mobile-header>
+
+  <!-- Main Content Tab Switcher -->
+  <main class="mobile-app-main" id="mobile-main">
+    @switch (platformService.activeTab()) {
+      @case ('home') {
+        <app-mobile-home></app-mobile-home>
+      }
+      @case ('menu') {
+        <app-mobile-menu></app-mobile-menu>
+      }
+      @case ('orders') {
+        <app-mobile-orders></app-mobile-orders>
+      }
+      @case ('cart') {
+        <app-mobile-cart></app-mobile-cart>
+      }
+      @case ('more') {
+        <app-mobile-more (openAuth)="showAuthScreen.set(true)"></app-mobile-more>
+      }
+    }
+  </main>
+
+  <!-- Bottom Navigation Tabs (Home, Menu, Orders, Cart, More) -->
+  <app-bottom-nav></app-bottom-nav>
+</div>

@@ -1,8 +1,8 @@
 import { Component, Output, EventEmitter, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { CartService } from '../../core/services/cart.service';
-import { BusinessStatusService } from '../../core/services/business-status.service';
-import { IconComponent } from '../../shared/components/icon/icon.component';
+import { CartService } from '../../../core/services/cart.service';
+import { BusinessStatusService } from '../../../core/services/business-status.service';
+import { IconComponent } from '../../../shared/components/icon/icon.component';
 
 @Component({
   selector: 'app-header',

@@ -1,7 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { BusinessStatusService } from '../../core/services/business-status.service';
-import { IconComponent } from '../../shared/components/icon/icon.component';
+import { BusinessStatusService } from '../../../core/services/business-status.service';
+import { IconComponent } from '../../../shared/components/icon/icon.component';
 
 @Component({
   selector: 'app-hero',

@@ -1,0 +1,37 @@
+<!-- ============================================ -->
+<!-- WEBSITE MODULE: FULL DESKTOP & BIG SCREEN    -->
+<!-- ============================================ -->
+<div class="website-layout">
+  <!-- Desktop Header -->
+  <app-header (openHoursModal)="openHoursModal.emit()"></app-header>
+
+  <!-- Main Website Content -->
+  <main class="main-content" id="main-content">
+    <!-- Hero Section -->
+    <app-hero></app-hero>
+
+    <!-- Category Quick Navigation -->
+    <app-category-nav></app-category-nav>
+
+    <!-- Popular Delicacies Section -->
+    <app-featured></app-featured>
+
+    <!-- Special Signature Product: Kunafa Jar -->
+    <app-kunafa-spotlight></app-kunafa-spotlight>
+
+    <!-- Full Interactive Food Menu -->
+    <app-menu></app-menu>
+
+    <!-- About TBZB Cloud Kitchen -->
+    <app-about></app-about>
+
+    <!-- Contact, Location & Delivery Info -->
+    <app-contact></app-contact>
+  </main>
+
+  <!-- Footer -->
+  <app-footer></app-footer>
+
+  <!-- Floating WhatsApp on Web View -->
+  <app-floating-whatsapp></app-floating-whatsapp>
+</div>

@@ -1,10 +1,10 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { MenuService } from '../../core/services/menu.service';
-import { CartService } from '../../core/services/cart.service';
-import { ToastService } from '../../core/services/toast.service';
-import { InrPipe } from '../../shared/pipes/inr.pipe';
-import { IconComponent } from '../../shared/components/icon/icon.component';
+import { MenuService } from '../../../core/services/menu.service';
+import { CartService } from '../../../core/services/cart.service';
+import { ToastService } from '../../../core/services/toast.service';
+import { InrPipe } from '../../../shared/pipes/inr.pipe';
+import { IconComponent } from '../../../shared/components/icon/icon.component';
 
 @Component({
   selector: 'app-kunafa-spotlight',
