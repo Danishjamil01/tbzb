@@ -12,7 +12,7 @@
       </div>
     </div>
 
-    <button class="skip-btn" (click)="skipToBidar()">Bidar Default</button>
+    <button class="skip-btn" (click)="confirmLocationAndProceed()">Skip</button>
   </div>
 
   <!-- Live Google Map View with Center Pin -->
@@ -42,22 +42,22 @@
     <div class="floating-gps-badge" [class.locked]="!isLoadingGps()">
       <span class="satellite-dot" [class.pulse]="isLoadingGps()"></span>
       <span class="badge-text">
-        {{ isLoadingGps() ? 'Connecting GPS Satellite...' : (isOutsideBidar() ? '⚠️ Live GPS Outside Bidar' : '🛰️ Bidar Delivery Zone Verified') }}
+        {{ isLoadingGps() ? 'Detecting Your Real Live Location...' : '🛰️ Live Location Locked' }}
       </span>
     </div>
   </div>
 
   <!-- Location Verification & Editable Area Section -->
   <div class="location-details-section">
-    <!-- Warning Banner if User is in Hyderabad, Bengaluru, etc. -->
+    <!-- Informative Notice if User is outside Bidar (e.g. Hyderabad, Bengaluru) -->
     @if (isOutsideBidar()) {
       <div class="outside-bidar-banner">
         <div class="banner-icon-col">
-          <app-icon name="alert-circle" [size]="20" />
+          <app-icon name="info" [size]="20" />
         </div>
         <div class="banner-text-col">
-          <strong>Outside Bidar Delivery Zone</strong>
-          <p>Your GPS detected: <strong>{{ outsideCityName() }} ({{ outsideDistanceKm() }} km away)</strong>. We only deliver in Bidar city limits. Please select your Bidar delivery address below:</p>
+          <strong>Location: {{ outsideCityName() }} ({{ outsideDistanceKm() }} km from Bidar)</strong>
+          <p>You can explore the full food menu now! Note: Food delivery orders are fulfilled within Bidar city limits at checkout.</p>
         </div>
       </div>
     }
@@ -65,7 +65,7 @@
     <!-- Editable Location Input Card -->
     <div class="location-input-card">
       <div class="card-title-row">
-        <span class="label-text">YOUR DELIVERY AREA IN BIDAR</span>
+        <span class="label-text">YOUR CURRENT LOCATION / ADDRESS</span>
         <button class="btn-detect-again" (click)="detectLiveLocation()" [disabled]="isLoadingGps()">
           <app-icon name="refresh-cw" [size]="13" [extraClass]="isLoadingGps() ? 'spin' : ''" />
           <span>{{ isLoadingGps() ? 'Detecting...' : 'Re-check GPS' }}</span>
@@ -78,7 +78,7 @@
         <input
           type="text"
           [(ngModel)]="customAreaInput"
-          placeholder="Enter Bidar area (e.g. Gandhi Gunj, Naubad...)"
+          placeholder="Detecting your location..."
           class="area-text-input"
           autocomplete="off"
         />
@@ -89,9 +89,9 @@
         }
       </div>
 
-      <!-- Quick Locality Chips (1-tap selection) -->
+      <!-- Quick Bidar Locality Chips (Fast 1-tap selection if ordering in Bidar) -->
       <div class="quick-chips-strip">
-        <span class="chips-label">Popular Areas:</span>
+        <span class="chips-label">Bidar Delivery Areas (Tap to pick):</span>
         <div class="chips-scroll-row">
           @for (chip of quickChips; track chip) {
             <button
@@ -104,7 +104,7 @@
             </button>
           }
           <button type="button" class="quick-pill-btn btn-more" (click)="showPopularAreas.set(true)">
-            + All Areas
+            + All 13 Areas
           </button>
         </div>
       </div>
@@ -121,7 +121,7 @@
         <span>Confirm Location & Open Menu</span>
         <app-icon name="arrow-right" [size]="18" />
       </button>
-      <p class="satisfaction-hint">Review or edit your delivery locality above, then tap Confirm.</p>
+      <p class="satisfaction-hint">Tap above to confirm your location and start browsing dishes.</p>
     </div>
   </div>
 
