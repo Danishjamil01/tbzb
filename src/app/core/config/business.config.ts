@@ -57,7 +57,7 @@ export const BUSINESS_CONFIG: BusinessConfig = {
     areaNote: 'Serving throughout Bidar City',
     latitude: 17.8953023,
     longitude: 77.5022301,
-    maxDeliveryRadiusKm: 18,
+    maxDeliveryRadiusKm: 25,
     mapUrl: 'https://www.google.com/maps/place/17%C2%B053\'43.1%22N+77%C2%B030\'08.0%22E/@17.8953023,77.5022301'
   },
   contact: {

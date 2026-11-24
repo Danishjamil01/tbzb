@@ -61,8 +61,8 @@ export class LocationScreenComponent implements OnInit, OnDestroy {
   ];
 
   // Bidar Kitchen Coordinates (TBZB Kitchen Center)
-  private readonly BIDAR_KITCHEN_LAT = 17.9104;
-  private readonly BIDAR_KITCHEN_LNG = 77.5199;
+  private readonly BIDAR_KITCHEN_LAT = 17.8953023;
+  private readonly BIDAR_KITCHEN_LNG = 77.5022301;
   private readonly MAX_DELIVERY_RADIUS_KM = 25; // Bidar delivery radius
 
   ngOnInit(): void {
@@ -110,11 +110,11 @@ export class LocationScreenComponent implements OnInit, OnDestroy {
           const realName = await this.reverseGeocode(lat, lng);
           this.applyResolvedLocation(realName, lat, lng);
         },
-        async (err) => {
-          // GPS denied or timed out -> Fallback to real IP geolocation (wherever the user actually is)
+        async () => {
+          // GPS denied or timed out -> Fallback to real IP geolocation
           await this.fallbackToIpLocation();
         },
-        { enableHighAccuracy: true, timeout: 6000 }
+        { enableHighAccuracy: true, timeout: 12000, maximumAge: 15000 }
       );
     } else {
       await this.fallbackToIpLocation();
@@ -124,7 +124,7 @@ export class LocationScreenComponent implements OnInit, OnDestroy {
   private async fallbackToIpLocation(): Promise<void> {
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 3500);
+      const timeoutId = setTimeout(() => controller.abort(), 4000);
       const res = await fetch('https://ipwho.is/', { signal: controller.signal });
       clearTimeout(timeoutId);
 
@@ -137,8 +137,24 @@ export class LocationScreenComponent implements OnInit, OnDestroy {
           const region = data.region || data.country || '';
           const locName = city && region ? `${city}, ${region}` : (city || 'Current Location');
 
-          this.applyCoordinates(lat, lng);
-          this.applyResolvedLocation(locName, lat, lng);
+          this.isLoadingGps.set(false);
+          this.detectedLocationName.set(locName);
+
+          const distance = this.calculateDistanceKm(this.BIDAR_KITCHEN_LAT, this.BIDAR_KITCHEN_LNG, lat, lng);
+          if (distance > this.MAX_DELIVERY_RADIUS_KM) {
+            // Note: Mobile cellular IPs in India route through state capitals (Bangalore/Hyderabad).
+            // Do NOT lock platformService.userCoordinates to Bangalore!
+            this.isOutsideBidar.set(true);
+            this.outsideDistanceKm.set(Math.round(distance));
+            this.outsideCityName.set(locName);
+            this.customAreaInput = locName;
+            this.updateMapCoordinates(lat, lng);
+          } else {
+            this.isOutsideBidar.set(false);
+            this.customAreaInput = locName;
+            this.applyCoordinates(lat, lng);
+            this.applyResolvedLocation(locName, lat, lng);
+          }
           return;
         }
       }
@@ -201,22 +217,38 @@ export class LocationScreenComponent implements OnInit, OnDestroy {
       this.outsideCityName.set(name);
     } else {
       this.isOutsideBidar.set(false);
+      this.outsideDistanceKm.set(null);
+      this.outsideCityName.set(null);
     }
   }
 
   selectQuickChip(chip: string): void {
     this.customAreaInput = `${chip}, Bidar`;
     this.isOutsideBidar.set(false);
+    this.outsideDistanceKm.set(null);
+    this.outsideCityName.set(null);
+    this.platformService.userLocationName.set(this.customAreaInput);
+    this.platformService.userCoordinates.set({ lat: this.BIDAR_KITCHEN_LAT, lng: this.BIDAR_KITCHEN_LNG });
+    this.updateMapCoordinates(this.BIDAR_KITCHEN_LAT, this.BIDAR_KITCHEN_LNG);
   }
 
   chooseArea(area: string): void {
     this.customAreaInput = `${area}, Bidar`;
     this.showPopularAreas.set(false);
     this.isOutsideBidar.set(false);
+    this.outsideDistanceKm.set(null);
+    this.outsideCityName.set(null);
+    this.platformService.userLocationName.set(this.customAreaInput);
+    this.platformService.userCoordinates.set({ lat: this.BIDAR_KITCHEN_LAT, lng: this.BIDAR_KITCHEN_LNG });
+    this.updateMapCoordinates(this.BIDAR_KITCHEN_LAT, this.BIDAR_KITCHEN_LNG);
   }
 
   skipToBidar(): void {
     this.customAreaInput = 'Bidar, Karnataka';
+    this.isOutsideBidar.set(false);
+    this.outsideDistanceKm.set(null);
+    this.outsideCityName.set(null);
+    this.platformService.userCoordinates.set({ lat: this.BIDAR_KITCHEN_LAT, lng: this.BIDAR_KITCHEN_LNG });
     this.confirmLocationAndProceed();
   }
 
@@ -224,6 +256,13 @@ export class LocationScreenComponent implements OnInit, OnDestroy {
     const area = (this.customAreaInput || '').trim() || 'Bidar, Karnataka';
 
     this.platformService.userLocationName.set(area);
+
+    const lower = area.toLowerCase();
+    const isForbidden = ['hyderabad', 'bengaluru', 'bangalore', 'mumbai', 'pune', 'delhi', 'gulbarga'].some(c => lower.includes(c));
+    if (!isForbidden) {
+      this.isOutsideBidar.set(false);
+      this.platformService.userCoordinates.set({ lat: this.BIDAR_KITCHEN_LAT, lng: this.BIDAR_KITCHEN_LNG });
+    }
 
     try {
       if (typeof localStorage !== 'undefined') {

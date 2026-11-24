@@ -1004,7 +1004,11 @@ export class CheckoutModalComponent {
         }
         const savedLoc = this.platformService.userLocationName();
         if (savedLoc && !this.checkoutForm.get('areaLocality')?.value) {
-          this.checkoutForm.patchValue({ areaLocality: savedLoc });
+          if (!this.isForbiddenOutsideCity(savedLoc)) {
+            this.checkoutForm.patchValue({ areaLocality: savedLoc });
+          } else {
+            this.checkoutForm.patchValue({ areaLocality: 'Bidar' });
+          }
         }
         const coords = this.platformService.userCoordinates();
         if (coords && !this.userLocation()) {
@@ -1012,13 +1016,16 @@ export class CheckoutModalComponent {
           const dist = this.calculateDistanceKm(this.config.location.latitude, this.config.location.longitude, coords.lat, coords.lng);
           const rDist = Number(dist.toFixed(1));
           this.userDistanceKm.set(rDist);
-          if (dist > this.config.location.maxDeliveryRadiusKm) {
-            this.isOutsideBidar.set(true);
-          } else {
-            this.isOutsideBidar.set(false);
-          }
+          this.recheckAddressValidity();
+        } else {
+          this.recheckAddressValidity();
         }
       }
+    });
+
+    // Reactively update validity when user edits address in checkout
+    this.checkoutForm.get('areaLocality')?.valueChanges.subscribe(val => {
+      this.recheckAddressValidity(val);
     });
   }
 
@@ -1075,6 +1082,40 @@ export class CheckoutModalComponent {
     return forbidden.some(city => lower.includes(city));
   }
 
+  recheckAddressValidity(locality?: string): void {
+    const loc = locality ?? this.checkoutForm.get('areaLocality')?.value ?? '';
+    const full = `${this.checkoutForm.get('flatNumber')?.value || ''} ${loc} ${this.checkoutForm.get('landmark')?.value || ''}`;
+
+    if (this.isForbiddenOutsideCity(full)) {
+      this.isOutsideBidar.set(true);
+      return;
+    }
+
+    // If real GPS coordinates exist
+    if (this.userDistanceKm() !== null) {
+      if (this.userDistanceKm()! <= this.config.location.maxDeliveryRadiusKm) {
+        this.isOutsideBidar.set(false);
+        return;
+      } else {
+        // Distance is > 25km. Check if the user entered a valid Bidar delivery location:
+        const lower = full.toLowerCase();
+        const hasBidar = lower.includes('bidar') || [
+          'gunj', 'naubad', 'shivnagar', 'gumpa', 'mailoor', 'fort',
+          'chidri', 'halladkeri', 'manhalli', 'taleem', 'udgir', 'gandhi gunj'
+        ].some(k => lower.includes(k));
+        if (hasBidar) {
+          this.isOutsideBidar.set(false);
+        } else {
+          this.isOutsideBidar.set(true);
+        }
+        return;
+      }
+    }
+
+    // No GPS fetched or GPS was denied: user is entering manual address in Bidar
+    this.isOutsideBidar.set(false);
+  }
+
   calculateDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
     const R = 6371; // Earth's radius in km
     const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -1115,21 +1156,27 @@ export class CheckoutModalComponent {
         );
         const roundedDist = Number(distance.toFixed(1));
         this.userDistanceKm.set(roundedDist);
+        this.isLocating.set(false);
 
-        if (distance > this.config.location.maxDeliveryRadiusKm) {
-          this.isOutsideBidar.set(true);
-          this.isLocating.set(false);
-          this.toastService.show(
-            `Delivery Unavailable: Your GPS is ${roundedDist} km away. We only deliver within Bidar.`,
-            'error'
-          );
-        } else {
+        if (distance <= this.config.location.maxDeliveryRadiusKm) {
           this.isOutsideBidar.set(false);
-          this.isLocating.set(false);
           if (showToast) {
             this.toastService.show(
               `Live Bidar location verified (${roundedDist} km from TBZB kitchen)! 📍`,
               'success'
+            );
+          }
+        } else {
+          this.recheckAddressValidity();
+          if (this.isOutsideBidar()) {
+            this.toastService.show(
+              `Delivery Unavailable: Your GPS is ${roundedDist} km away. We only deliver within Bidar.`,
+              'error'
+            );
+          } else {
+            this.toastService.show(
+              `GPS coordinates attached (${roundedDist} km). Food will be delivered to your Bidar address.`,
+              'info'
             );
           }
         }
@@ -1145,15 +1192,18 @@ export class CheckoutModalComponent {
           errorMsg = 'Location request timed out. Using manual Bidar address.';
         }
         this.locationError.set(errorMsg);
-        // Only show toast if user explicitly clicked Re-check button and not permission denied
+
+        // Do not block the user with a false alarm if address is in Bidar
+        this.recheckAddressValidity();
+
         if (showToast && error.code !== error.PERMISSION_DENIED) {
           this.toastService.show(errorMsg, 'info');
         }
       },
       {
         enableHighAccuracy: true,
-        timeout: 8000,
-        maximumAge: 0
+        timeout: 10000,
+        maximumAge: 15000
       }
     );
   }

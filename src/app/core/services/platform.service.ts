@@ -86,7 +86,7 @@ export class PlatformService {
           const region = ipData.region || ipData.country || '';
           const name = region ? `${city}, ${region}` : city;
           this.userLocationName.set(name);
-          this.userCoordinates.set({ lat: ipData.latitude, lng: ipData.longitude });
+          // NOTE: Do NOT set userCoordinates from cellular IP, because mobile IPs in India route via state capitals (Bangalore/Hyderabad).
         }
       }
     } catch (e) {
