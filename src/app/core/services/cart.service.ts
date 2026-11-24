@@ -1,7 +1,9 @@
-import { Injectable, signal, computed, effect } from '@angular/core';
+import { Injectable, signal, computed, effect, inject } from '@angular/core';
 import { CartItem, CartCalculation } from '../models/cart.model';
 import { MenuItem } from '../models/menu.model';
 import { BusinessStatusService } from './business-status.service';
+import { AuthService } from './auth.service';
+import { ToastService } from './toast.service';
 
 const CART_STORAGE_KEY = 'tbzb_cart_items_v1';
 
@@ -140,6 +142,9 @@ export class CartService {
     this.saveToStorage([]);
   }
 
+  private authService = inject(AuthService);
+  private toastService = inject(ToastService);
+
   // Drawer & modal controls
   openCartDrawer(): void {
     this.isCartDrawerOpen.set(true);
@@ -150,6 +155,12 @@ export class CartService {
   }
 
   openCheckout(): void {
+    if (!this.authService.isLoggedIn()) {
+      this.isCartDrawerOpen.set(false);
+      this.toastService.show('Please login or create an account to place an order.', 'warning', 'Login Required');
+      this.authService.isAuthModalOpen.set(true);
+      return;
+    }
     this.isCartDrawerOpen.set(false);
     this.isCheckoutModalOpen.set(true);
   }

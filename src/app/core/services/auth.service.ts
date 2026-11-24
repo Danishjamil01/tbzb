@@ -13,6 +13,7 @@ export class AuthService {
   currentUser = signal<UserProfile | null>(this.loadStoredUser());
   isLoggedIn = computed(() => !!this.currentUser());
   isLoading = signal<boolean>(false);
+  readonly isAuthModalOpen = signal<boolean>(false);
 
   private loadStoredUser(): UserProfile | null {
     try {

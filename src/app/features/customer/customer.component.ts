@@ -1,4 +1,4 @@
-import { Component, Output, EventEmitter, inject, signal, OnInit } from '@angular/core';
+import { Component, Output, EventEmitter, inject, signal, OnInit, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SplashScreenComponent } from '../../shared/components/splash-screen/splash-screen.component';
 import { LocationScreenComponent } from './location-screen/location-screen.component';
@@ -12,6 +12,8 @@ import { MobileCartComponent } from './mobile-cart/mobile-cart.component';
 import { MobileMoreComponent } from './mobile-more/mobile-more.component';
 import { PlatformService } from '../../core/services/platform.service';
 import { AuthService } from '../../core/services/auth.service';
+import { StatusBarService } from '../../core/services/status-bar.service';
+import { CartService } from '../../core/services/cart.service';
 
 @Component({
   selector: 'app-customer',
@@ -35,6 +37,8 @@ import { AuthService } from '../../core/services/auth.service';
 export class CustomerComponent implements OnInit {
   platformService = inject(PlatformService);
   authService = inject(AuthService);
+  cartService = inject(CartService);
+  private statusBarService = inject(StatusBarService);
 
   @Output() openHoursModal = new EventEmitter<void>();
 
@@ -42,8 +46,35 @@ export class CustomerComponent implements OnInit {
   showLocationScreen = signal<boolean>(false);
   showAuthScreen = signal<boolean>(false);
 
+  constructor() {
+    // Synchronize authService.isAuthModalOpen
+    effect(() => {
+      const open = this.authService.isAuthModalOpen();
+      if (open) {
+        this.showAuthScreen.set(true);
+        this.statusBarService.setLightMode('#FFFFFF');
+      }
+    });
+
+    // Synchronize status bar when screens or modals change
+    effect(() => {
+      if (
+        this.showSplash() ||
+        this.showAuthScreen() ||
+        this.showLocationScreen() ||
+        this.cartService.isCheckoutModalOpen()
+      ) {
+        this.statusBarService.setLightMode('#FFFFFF');
+      } else {
+        this.statusBarService.setDarkMode('#092819');
+      }
+    });
+  }
+
   ngOnInit(): void {
-    // Check if user already saw splash this session
+    // Initial status bar for splash / startup
+    this.statusBarService.setLightMode('#FFFFFF');
+
     try {
       if (typeof sessionStorage !== 'undefined' && sessionStorage.getItem('tbzb_splash_seen') === 'true') {
         this.showSplash.set(false);
@@ -62,6 +93,7 @@ export class CustomerComponent implements OnInit {
     // Step 2: Direct Create Account screen for new users right after splash screen
     if (!this.authService.isLoggedIn()) {
       this.showAuthScreen.set(true);
+      this.statusBarService.setLightMode('#FFFFFF');
     } else {
       let savedLoc: string | null = null;
       try {
@@ -72,33 +104,26 @@ export class CustomerComponent implements OnInit {
 
       if (!savedLoc) {
         this.showLocationScreen.set(true);
+        this.statusBarService.setLightMode('#FFFFFF');
       } else {
         this.platformService.userLocationName.set(savedLoc);
-        this.updateThemeColor('#092819');
+        this.statusBarService.setDarkMode('#092819');
       }
     }
   }
 
   onAuthFinished(): void {
     this.showAuthScreen.set(false);
+    this.authService.isAuthModalOpen.set(false);
     // After login / account created -> Show automatic Google Map live location screen
     this.showLocationScreen.set(true);
+    this.statusBarService.setLightMode('#FFFFFF');
   }
 
   onLocationConfirmed(location: string): void {
     this.showLocationScreen.set(false);
     this.platformService.userLocationName.set(location);
-    // Location confirmed -> Match status bar color with header background (#092819)
-    this.updateThemeColor('#092819');
-  }
-
-  private updateThemeColor(color: string): void {
-    if (typeof document !== 'undefined') {
-      const metaTheme = document.querySelector('meta[name="theme-color"]');
-      if (metaTheme) {
-        metaTheme.setAttribute('content', color);
-      }
-    }
+    this.statusBarService.setDarkMode('#092819');
   }
 }
 

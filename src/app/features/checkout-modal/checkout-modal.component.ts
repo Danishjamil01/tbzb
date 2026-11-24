@@ -246,7 +246,7 @@ import { AuthService } from '../../core/services/auth.service';
               </div>
             </div>
 
-            <!-- 4. Total & Submit on WhatsApp -->
+            <!-- 4. Total & Confirm Order -->
             <div class="checkout-footer-card">
               <div class="total-row">
                 <div class="total-text-col">
@@ -254,7 +254,7 @@ import { AuthService } from '../../core/services/auth.service';
                   @if (calculation().isAfterMidnight) {
                     <span class="fee-note">₹60 late-night delivery included</span>
                   } @else if (calculation().hasPendingDeliveryFee) {
-                    <span class="fee-note">Delivery charge confirmed on WhatsApp</span>
+                    <span class="fee-note">Delivery charge confirmed by kitchen</span>
                   }
                 </div>
                 <div class="total-val">{{ calculation().total | inr }}</div>
@@ -269,14 +269,23 @@ import { AuthService } from '../../core/services/auth.service';
                   <app-icon name="alert-circle" [size]="18" />
                   <span>Delivery Not Available Outside Bidar</span>
                 </button>
+              } @else if (!authService.isLoggedIn()) {
+                <button
+                  type="button"
+                  class="btn-submit btn-login-required"
+                  (click)="onRequireLogin()"
+                >
+                  <app-icon name="lock" [size]="18" />
+                  <span>Log In to Place Order • {{ calculation().total | inr }}</span>
+                </button>
               } @else {
                 <button
                   type="submit"
                   class="btn-submit"
                   [disabled]="isSubmitting"
                 >
-                  <app-icon name="whatsapp" [size]="20" />
-                  <span>Place Order on WhatsApp • {{ calculation().total | inr }}</span>
+                  <app-icon name="check-circle" [size]="20" />
+                  <span>Confirm & Place Order • {{ calculation().total | inr }}</span>
                 </button>
               }
             </div>
@@ -945,11 +954,11 @@ import { AuthService } from '../../core/services/auth.service';
 
     .btn-submit {
       width: 100%;
-      padding: 12px 18px;
+      padding: 13px 18px;
       font-size: 14.5px;
       font-weight: 700;
       border-radius: 12px;
-      background: #25D366;
+      background: #0F472B;
       color: #FFFFFF;
       border: none;
       display: flex;
@@ -957,11 +966,11 @@ import { AuthService } from '../../core/services/auth.service';
       justify-content: center;
       gap: 8px;
       cursor: pointer;
-      box-shadow: 0 3px 12px rgba(37, 211, 102, 0.3);
+      box-shadow: 0 4px 14px rgba(15, 71, 43, 0.3);
       transition: all 0.2s ease;
 
       &:hover:not(:disabled) {
-        background: #1EBE5D;
+        background: #145A38;
         transform: translateY(-1px);
       }
 
@@ -973,6 +982,15 @@ import { AuthService } from '../../core/services/auth.service';
       &.btn-blocked {
         background: #DC2626;
         box-shadow: none;
+      }
+
+      &.btn-login-required {
+        background: #F59E0B;
+        box-shadow: 0 4px 14px rgba(245, 158, 11, 0.35);
+
+        &:hover {
+          background: #D97706;
+        }
       }
     }
   `]
@@ -1212,7 +1230,22 @@ export class CheckoutModalComponent {
     this.cartService.closeCheckout();
   }
 
+  onRequireLogin(): void {
+    this.toastService.show(
+      'Please sign in or create an account to place your order.',
+      'warning',
+      'Login Required'
+    );
+    this.cartService.closeCheckout();
+    this.authService.isAuthModalOpen.set(true);
+  }
+
   onSubmitOrder(): void {
+    if (!this.authService.isLoggedIn()) {
+      this.onRequireLogin();
+      return;
+    }
+
     if (this.checkoutForm.invalid) {
       this.checkoutForm.markAllAsTouched();
       this.toastService.show('Please fill in all required fields accurately.', 'error');
@@ -1248,82 +1281,17 @@ export class CheckoutModalComponent {
     const items = this.cartService.items();
     const coords = this.userLocation();
 
-    // Format individual order lines
-    const orderLines = items.map(
-      ci => `• ${ci.quantity} × ${ci.menuItem.name} – ₹${ci.menuItem.price * ci.quantity}`
-    ).join('\n');
-
     // Delivery & GPS Location Section
-    let locationSection = '';
     let googleMapsUrl = '';
-
     if (coords) {
       googleMapsUrl = `https://maps.google.com/?q=${coords.lat},${coords.lng}`;
-      locationSection = `🗺️ *Customer Live GPS:* ${googleMapsUrl}${this.userDistanceKm() !== null ? ' (' + this.userDistanceKm() + ' km from TBZB kitchen)' : ''}\n`;
     }
 
-    const addressSection = `📍 *Delivery Address:*\n${formValues.flatNumber}, ${formValues.areaLocality}${formValues.landmark ? ' (Landmark: ' + formValues.landmark + ')' : ''}, Bidar\n${locationSection}`;
+    const orderId = 'TBZB-' + Date.now().toString().slice(-6);
 
-    // Payment Section
-    let paymentSection = '';
-    if (formValues.paymentMethod === 'upi') {
-      paymentSection = `💳 *Payment Mode:* Online UPI Payment (QR Code Scanned)\n`;
-      if (formValues.upiTransactionId?.trim()) {
-        paymentSection += `🔢 *UPI / UTR Ref:* ${formValues.upiTransactionId.trim()}\n`;
-      }
-      paymentSection += `📸 *Payment Screenshot:* (Will send screenshot here)\n`;
-    } else {
-      paymentSection = `💳 *Payment Mode:* Cash on Delivery (COD)\n`;
-    }
-
-    // Delivery Fee Line
-    let deliveryLine = '';
-    if (calc.isAfterMidnight) {
-      deliveryLine = `🛵 *Delivery Charge:* ₹60 (Late-night rate after midnight)\n`;
-    } else if (calc.deliveryCharge !== null) {
-      deliveryLine = `🛵 *Delivery Charge:* ₹${calc.deliveryCharge}\n`;
-    } else {
-      deliveryLine = `🛵 *Delivery Charge:* Awaiting confirmation on WhatsApp\n`;
-    }
-
-    // Kitchen link
-    const kitchenMapLine = `📍 *Kitchen Location:* ${this.config.location.mapUrl}\n`;
-
-    // Clean, direct WhatsApp Message
-    const messageText = `🍽️ *NEW FOOD ORDER – THE BITE ZONE (TBZB)*
-================================
-👤 *Customer:* ${formValues.fullName}
-📞 *Mobile:* +91 ${formValues.mobileNumber}
-${addressSection}${kitchenMapLine}
-🍱 *Order Items:*
-${orderLines}
-
-================================
-💰 *Item Subtotal:* ₹${calc.subtotal}
-${deliveryLine}🧾 *Total Payable:* ₹${calc.total}
-${paymentSection}================================
-_Order placed via TBZB Online Website • Delivery strictly within Bidar_`;
-
-    const whatsAppUrl = `https://wa.me/${this.config.contact.whatsappNumber}?text=${encodeURIComponent(messageText)}`;
-
-    const orderRecord: PlacedOrder = {
-      orderId: 'TBZB-' + Date.now().toString().slice(-6),
-      timestamp: new Date(),
-      customer: {
-        ...formValues,
-        orderType: 'delivery',
-        locationCoordinates: coords ?? undefined,
-        googleMapsUrl: googleMapsUrl || undefined
-      },
-      items: [...items],
-      calculation: calc,
-      formattedWhatsAppMessage: messageText,
-      whatsAppUrl
-    };
-
-    // Save order into Live Kitchen Admin Portal (Firebase Firestore + Local Storage)
+    // Save order into Live Kitchen Admin Portal & Partner App (Firebase Firestore + Local Storage)
     const kitchenOrder: KitchenOrder = {
-      orderId: orderRecord.orderId,
+      orderId,
       createdAt: new Date().toISOString(),
       customerName: formValues.fullName,
       mobileNumber: formValues.mobileNumber,
@@ -1345,21 +1313,33 @@ _Order placed via TBZB Online Website • Delivery strictly within Bidar_`;
       total: calc.total,
       status: 'new'
     };
+
+    // 1. Submit directly to Firestore tbzb_orders
     this.orderService.createOrder(kitchenOrder);
+
+    // 2. Set as active customer order for in-app tracking
     this.platformService.setCustomerOrder(kitchenOrder);
 
-    // If customer is logged in, auto-save / update their Bidar delivery address on server
+    // 3. If customer is logged in, auto-save / update their Bidar delivery address on profile
     if (this.authService.isLoggedIn() && formValues.areaLocality) {
       this.authService.updateSavedAddress(formValues.areaLocality);
     }
 
-    // Open WhatsApp
-    window.open(whatsAppUrl, '_blank', 'noopener,noreferrer');
+    // 4. Clear the cart
+    this.cartService.clearCart();
 
-    // Save order record into window object and trigger confirmation modal
+    // 5. Close the checkout modal
     this.cartService.closeCheckout();
-    this.cartService.isOrderConfirmedModalOpen.set(true);
-    (window as any).__lastTbzbOrder = orderRecord;
+
+    // 6. Navigate directly to in-app Orders Live Tracking tab
+    this.platformService.activeTab.set('orders');
+
+    // 7. Show confirmation notification
+    this.toastService.show(
+      `Order #${orderId} confirmed! Sent to TBZB kitchen for preparation.`,
+      'success',
+      'Order Placed'
+    );
 
     this.isSubmitting = false;
   }
