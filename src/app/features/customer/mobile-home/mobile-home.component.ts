@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { PlatformService } from '../../../core/services/platform.service';
 import { MenuService } from '../../../core/services/menu.service';
 import { CartService } from '../../../core/services/cart.service';
+import { StatusBarService } from '../../../core/services/status-bar.service';
 import { MenuItem, FoodCategory } from '../../../core/models/menu.model';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { InrPipe } from '../../../shared/pipes/inr.pipe';
@@ -18,15 +19,11 @@ export class MobileHomeComponent implements OnInit {
   platformService = inject(PlatformService);
   menuService = inject(MenuService);
   cartService = inject(CartService);
+  private statusBarService = inject(StatusBarService);
 
   ngOnInit(): void {
-    // Match mobile statusbar color with home page header background (#092819)
-    if (typeof document !== 'undefined') {
-      const meta = document.querySelector('meta[name="theme-color"]');
-      if (meta) {
-        meta.setAttribute('content', '#092819');
-      }
-    }
+    // Set mobile status bar color to red (#DC2626) on the Home page
+    this.statusBarService.setDarkMode('#DC2626');
   }
 
   featuredItems = this.menuService.featuredItems;

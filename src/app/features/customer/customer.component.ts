@@ -56,7 +56,7 @@ export class CustomerComponent implements OnInit {
       }
     });
 
-    // Synchronize status bar when screens or modals change
+    // Synchronize status bar when screens, tabs, or modals change
     effect(() => {
       if (
         this.showSplash() ||
@@ -65,6 +65,8 @@ export class CustomerComponent implements OnInit {
         this.cartService.isCheckoutModalOpen()
       ) {
         this.statusBarService.setLightMode('#FFFFFF');
+      } else if (this.platformService.activeTab() === 'home') {
+        this.statusBarService.setDarkMode('#DC2626');
       } else {
         this.statusBarService.setDarkMode('#092819');
       }
@@ -112,7 +114,7 @@ export class CustomerComponent implements OnInit {
         this.statusBarService.setLightMode('#FFFFFF');
       } else {
         this.platformService.userLocationName.set(savedLoc);
-        this.statusBarService.setDarkMode('#092819');
+        this.statusBarService.setDarkMode(this.platformService.activeTab() === 'home' ? '#DC2626' : '#092819');
       }
     }
   }
@@ -128,7 +130,7 @@ export class CustomerComponent implements OnInit {
   onLocationConfirmed(location: string): void {
     this.showLocationScreen.set(false);
     this.platformService.userLocationName.set(location);
-    this.statusBarService.setDarkMode('#092819');
+    this.statusBarService.setDarkMode(this.platformService.activeTab() === 'home' ? '#DC2626' : '#092819');
   }
 }
 
