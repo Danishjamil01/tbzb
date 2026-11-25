@@ -55,6 +55,14 @@ export class PlatformService {
   readonly isLocating = signal<boolean>(false);
   readonly gpsError = signal<string | null>(null);
 
+  readonly isOutsideDeliveryZone = computed<boolean>(() => {
+    const coords = this.userCoordinates();
+    if (!coords) {
+      return false;
+    }
+    return !this.locationService.validateDeliveryEligibility(coords, this.userLocationName()).allowed;
+  });
+
   constructor() {
     // Automatically attempt real GPS detection on startup
     this.fetchRealLocation();

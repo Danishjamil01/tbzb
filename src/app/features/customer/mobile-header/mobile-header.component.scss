@@ -37,6 +37,11 @@
 
     .loc-sub {
       color: #78716C;
+
+      &.outside {
+        color: #B45309;
+        font-weight: 600;
+      }
     }
 
     .status-pill {
@@ -141,6 +146,11 @@
   overflow: hidden;
   text-overflow: ellipsis;
   letter-spacing: 0.2px;
+
+  &.outside {
+    color: #FCD34D;
+    font-weight: 600;
+  }
 }
 
 .header-actions {

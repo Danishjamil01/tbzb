@@ -11,9 +11,11 @@
           <span class="city-title">{{ platformService.userLocationName() }}</span>
           <app-icon name="chevron-down" [size]="13" />
         </div>
-        <span class="loc-sub">
+        <span class="loc-sub" [class.outside]="!platformService.isLocating() && platformService.isOutsideDeliveryZone()">
           @if (platformService.isLocating()) {
           Locating your real area...
+          } @else if (platformService.isOutsideDeliveryZone()) {
+          Outside Bidar • Browse Menu Only
           } @else {
           Doorstep Delivery • 15–25 Mins
           }

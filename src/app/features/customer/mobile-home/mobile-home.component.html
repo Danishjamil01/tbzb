@@ -11,7 +11,7 @@
         </div>
 
         <h2 class="hero-heading">Fresh Rolls & Handi Biryani</h2>
-        <p class="hero-sub">Cooked fresh on order • 100% Halal • Delivered hot</p>
+        <p class="hero-sub">100% Halal • Cooked Fresh on Order</p>
 
         <div class="hero-cta-row">
           <button class="btn-hero-order" (click)="goToMenu('all')">
@@ -25,10 +25,10 @@
         </div>
       </div>
 
-      @if (featuredItems()[0]; as heroItem) {
+      @if (heroDish(); as heroItem) {
         <div class="hero-dish-spotlight" (click)="openDishModal(heroItem)">
           <div class="spotlight-frame">
-            <img [src]="heroItem.imageUrl" [alt]="heroItem.name" class="spotlight-img" />
+            <img src="images/food/heroright-clean.png" [alt]="heroItem.name" class="spotlight-img" />
           </div>
           <span class="spotlight-price-tag">{{ heroItem.price | inr }}</span>
         </div>
