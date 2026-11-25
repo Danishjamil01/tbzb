@@ -378,7 +378,7 @@
 /* Floating Cart Bar */
 .floating-cart-bar {
   position: fixed;
-  bottom: 68px;
+  bottom: calc(68px + var(--tbzb-safe-bottom, 0px));
   left: 12px;
   right: 12px;
   background: linear-gradient(135deg, #092819 0%, #0F472B 100%);

@@ -1,5 +1,18 @@
+.app-status-bar-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--tbzb-safe-top, 0px);
+  background-color: var(--tbzb-status-bar-bg, #092819);
+  z-index: 10000001;
+  pointer-events: none;
+  transition: background-color 0.18s ease;
+}
+
 .mobile-app-layout {
   min-height: 100vh;
+  padding-top: var(--tbzb-safe-top, 0px);
   display: flex;
   flex-direction: column;
   background-color: #F8FAFC;
@@ -12,6 +25,6 @@
 
 .mobile-app-main {
   flex: 1;
-  padding-bottom: 74px; /* Space for bottom nav */
+  padding-bottom: calc(74px + var(--tbzb-safe-bottom, 0px)); /* Space for bottom nav */
 }
 

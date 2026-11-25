@@ -372,7 +372,7 @@ import { LocationService } from '../../core/services/location.service';
       z-index: 2;
 
       @media (max-width: 640px) {
-        padding: 12px 14px;
+        padding: calc(12px + var(--tbzb-safe-top, 0px)) 14px 12px;
         box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
       }
 
@@ -449,6 +449,10 @@ import { LocationService } from '../../core/services/location.service';
       overflow-y: auto;
       flex: 1;
       background: #FAF7F2;
+
+      @media (max-width: 640px) {
+        padding-bottom: calc(18px + var(--tbzb-safe-bottom, 0px));
+      }
     }
 
     .checkout-form {

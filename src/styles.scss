@@ -64,6 +64,9 @@
   /* Layout */
   --header-height: 72px;
   --max-width: 100%;
+  --tbzb-safe-top: max(var(--safe-area-inset-top, 0px), env(safe-area-inset-top, 0px));
+  --tbzb-safe-bottom: max(var(--safe-area-inset-bottom, 0px), env(safe-area-inset-bottom, 0px));
+  --tbzb-status-bar-bg: #092819;
 }
 
 /* Base Reset */

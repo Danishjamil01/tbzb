@@ -14,7 +14,7 @@
   align-items: center;
   justify-content: space-around;
   z-index: 1000;
-  padding-bottom: max(0px, env(safe-area-inset-bottom));
+  padding-bottom: var(--tbzb-safe-bottom, 0px);
   box-sizing: content-box;
 }
 

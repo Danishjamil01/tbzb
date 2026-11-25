@@ -1,6 +1,6 @@
 .mobile-header {
   position: sticky;
-  top: 0;
+  top: var(--tbzb-safe-top, 0px);
   left: 0;
   right: 0;
   background: #0B2F1D;

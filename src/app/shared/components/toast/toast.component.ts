@@ -43,7 +43,7 @@ import { IconComponent } from '../icon/icon.component';
   styles: [`
     .toast-container {
       position: fixed;
-      top: 84px;
+      top: calc(84px + var(--tbzb-safe-top, 0px));
       right: 20px;
       z-index: 99999999;
       display: flex;
