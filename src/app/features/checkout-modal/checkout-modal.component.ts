@@ -1019,32 +1019,18 @@ export class CheckoutModalComponent {
   constructor() {
     effect(() => {
       const isOpen = this.cartService.isCheckoutModalOpen();
-      const user = this.authService.currentUser();
       if (isOpen) {
-        if (user) {
-          if (!this.checkoutForm.get('fullName')?.value && user.name) {
-            this.checkoutForm.patchValue({ fullName: user.name });
-          }
-          if (!this.checkoutForm.get('mobileNumber')?.value && user.mobileNumber) {
-            this.checkoutForm.patchValue({ mobileNumber: user.mobileNumber });
-          }
-          if (
-            !this.checkoutForm.get('areaLocality')?.value &&
-            user.savedAddress &&
-            !this.locationService.isForbiddenOutsideCity(user.savedAddress)
-          ) {
-            this.checkoutForm.patchValue({ areaLocality: user.savedAddress });
-          }
-        }
-        const savedLoc = this.platformService.userLocationName();
+        const liveLoc = this.platformService.userLocationName();
         if (
-          savedLoc &&
-          !savedLoc.includes('Detecting') &&
-          !savedLoc.includes('Verify') &&
+          liveLoc &&
+          !liveLoc.includes('Detecting') &&
+          !liveLoc.includes('Verify') &&
+          !liveLoc.includes('GPS Verification') &&
+          !liveLoc.includes('Browse Mode') &&
           !this.checkoutForm.get('areaLocality')?.value &&
-          !this.locationService.isForbiddenOutsideCity(savedLoc)
+          !this.locationService.isForbiddenOutsideCity(liveLoc)
         ) {
-          this.checkoutForm.patchValue({ areaLocality: savedLoc });
+          this.checkoutForm.patchValue({ areaLocality: liveLoc });
         }
 
         // Prioritize real hardware GPS coordinates

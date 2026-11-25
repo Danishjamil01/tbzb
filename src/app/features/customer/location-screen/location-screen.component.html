@@ -137,26 +137,6 @@
           </div>
         }
       </div>
-
-      <!-- Quick Verified Bidar Locality Chips -->
-      <div class="quick-chips-strip">
-        <span class="chips-label">Verified Bidar Zones:</span>
-        <div class="chips-scroll-row">
-          @for (chip of quickChips; track chip.name) {
-            <button
-              type="button"
-              class="quick-pill-btn"
-              [class.active]="detectedLocationName()?.includes(chip.name)"
-              (click)="selectBidarLocality(chip)"
-            >
-              {{ chip.name }}
-            </button>
-          }
-          <button type="button" class="quick-pill-btn btn-more" (click)="showPopularAreas.set(true)">
-            + All {{ bidarLocalities.length }} Areas
-          </button>
-        </div>
-      </div>
     </div>
 
     <!-- Confirm Button -->
@@ -179,31 +159,4 @@
       </p>
     </div>
   </div>
-
-  <!-- All Bidar Areas Drawer -->
-  @if (showPopularAreas()) {
-    <div class="areas-drawer-backdrop" (click)="showPopularAreas.set(false)"></div>
-    <div class="areas-drawer">
-      <div class="drawer-header">
-        <div class="drawer-header-left">
-          <app-icon name="map-pin" [size]="18" />
-          <h3 class="drawer-title">Select Verified Bidar Locality</h3>
-        </div>
-        <button type="button" class="drawer-close-btn" (click)="showPopularAreas.set(false)" aria-label="Close">
-          <app-icon name="x" [size]="18" />
-        </button>
-      </div>
-      <div class="areas-list-scroll">
-        @for (area of bidarLocalities; track area.name) {
-          <button type="button" class="area-item-row" (click)="selectBidarLocality(area)">
-            <div class="area-item-left">
-              <span class="area-pin-dot"></span>
-              <span class="area-name">{{ area.name }}</span>
-            </div>
-            <span class="area-tag">Bidar • Verified</span>
-          </button>
-        }
-      </div>
-    </div>
-  }
 </div>

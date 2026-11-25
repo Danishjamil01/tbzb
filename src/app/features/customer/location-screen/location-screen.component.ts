@@ -17,8 +17,6 @@ import { PlatformService } from '../../../core/services/platform.service';
 import { ToastService } from '../../../core/services/toast.service';
 import {
   LocationService,
-  VERIFIED_BIDAR_LOCALITIES,
-  BidarLocality,
   AddressSuggestion
 } from '../../../core/services/location.service';
 import { BUSINESS_CONFIG } from '../../../core/config/business.config';
@@ -40,13 +38,10 @@ export class LocationScreenComponent implements OnInit, AfterViewInit, OnDestroy
   @Output() locationConfirmed = new EventEmitter<string>();
 
   readonly config = BUSINESS_CONFIG.location;
-  readonly bidarLocalities = VERIFIED_BIDAR_LOCALITIES;
-  readonly quickChips = VERIFIED_BIDAR_LOCALITIES.slice(0, 6);
 
   isLoadingGps = signal<boolean>(true);
   isDismissing = signal<boolean>(false);
   isSearching = signal<boolean>(false);
-  showPopularAreas = signal<boolean>(false);
 
   detectedLocationName = signal<string | null>(null);
   fullResolvedAddress = signal<string | null>(null);
@@ -268,14 +263,6 @@ export class LocationScreenComponent implements OnInit, AfterViewInit, OnDestroy
     this.gpsErrorMsg.set(null);
     this.setUserMapPin(item.lat, item.lng, true);
     this.applyVerifiedPoint(item.label, item.fullAddress, item.lat, item.lng, false);
-  }
-
-  selectBidarLocality(loc: BidarLocality): void {
-    this.suggestions.set([]);
-    this.showPopularAreas.set(false);
-    this.gpsErrorMsg.set(null);
-    this.setUserMapPin(loc.lat, loc.lng, true);
-    this.applyVerifiedPoint(`${loc.name}, Bidar`, loc.fullAddress, loc.lat, loc.lng, false);
   }
 
   clearSearch(): void {
