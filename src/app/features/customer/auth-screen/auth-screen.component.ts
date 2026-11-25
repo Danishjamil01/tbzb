@@ -28,6 +28,9 @@ export class AuthScreenComponent {
   // In-form error message state
   loginErrorMessage = signal<string | null>(null);
   isAccountNotFound = signal<boolean>(false);
+  registerErrorMessage = signal<string | null>(null);
+  isAlreadyRegistered = signal<boolean>(false);
+  forgotErrorMessage = signal<string | null>(null);
 
   // Form Fields
   loginMobile: string = '';
@@ -45,13 +48,27 @@ export class AuthScreenComponent {
     this.showPassword.set(false);
     this.loginErrorMessage.set(null);
     this.isAccountNotFound.set(false);
+    this.registerErrorMessage.set(null);
+    this.isAlreadyRegistered.set(false);
+    this.forgotErrorMessage.set(null);
   }
 
   switchToRegisterWithMobile(): void {
     this.regMobile = this.loginMobile;
     this.loginErrorMessage.set(null);
     this.isAccountNotFound.set(false);
+    this.registerErrorMessage.set(null);
+    this.isAlreadyRegistered.set(false);
     this.mode.set('register');
+  }
+
+  switchToLoginWithMobile(): void {
+    this.loginMobile = this.regMobile;
+    this.registerErrorMessage.set(null);
+    this.isAlreadyRegistered.set(false);
+    this.loginErrorMessage.set(null);
+    this.isAccountNotFound.set(false);
+    this.mode.set('login');
   }
 
   togglePasswordVisibility(): void {
@@ -62,7 +79,8 @@ export class AuthScreenComponent {
     this.loginErrorMessage.set(null);
     this.isAccountNotFound.set(false);
 
-    if (!this.loginMobile || this.loginMobile.length !== 10) {
+    const cleanLoginMobile = (this.loginMobile || '').replace(/\D/g, '').slice(-10);
+    if (!cleanLoginMobile || cleanLoginMobile.length !== 10) {
       this.loginErrorMessage.set('Kripya apna 10-digit mobile number enter karein.');
       this.toastService.show('Please enter a valid 10-digit mobile number', 'warning');
       return;
@@ -73,7 +91,7 @@ export class AuthScreenComponent {
       return;
     }
 
-    const res = await this.authService.login(this.loginMobile, this.loginPassword);
+    const res = await this.authService.login(cleanLoginMobile, this.loginPassword);
     if (res.success) {
       this.dismiss();
     } else {
@@ -86,41 +104,65 @@ export class AuthScreenComponent {
   }
 
   async handleRegister(): Promise<void> {
+    this.registerErrorMessage.set(null);
+    this.isAlreadyRegistered.set(false);
+
     if (!this.regName || this.regName.trim().length < 2) {
-      this.toastService.show('Please enter your full name', 'warning');
-      return;
-    }
-    if (!this.regMobile || this.regMobile.length !== 10) {
-      this.toastService.show('Please enter a valid 10-digit mobile number', 'warning');
-      return;
-    }
-    if (!this.regPassword || this.regPassword.length < 4) {
-      this.toastService.show('Password must be at least 4 characters', 'warning');
+      const msg = 'Please enter your full name (min 2 characters).';
+      this.registerErrorMessage.set(msg);
+      this.toastService.show(msg, 'warning');
       return;
     }
 
-    const res = await this.authService.register(this.regName, this.regMobile, this.regPassword);
+    const cleanRegMobile = (this.regMobile || '').replace(/\D/g, '').slice(-10);
+    if (!cleanRegMobile || cleanRegMobile.length !== 10) {
+      const msg = 'Please enter a valid 10-digit mobile number.';
+      this.registerErrorMessage.set(msg);
+      this.toastService.show(msg, 'warning');
+      return;
+    }
+
+    if (!this.regPassword || this.regPassword.length < 4) {
+      const msg = 'Password must be at least 4 characters long.';
+      this.registerErrorMessage.set(msg);
+      this.toastService.show(msg, 'warning');
+      return;
+    }
+
+    const res = await this.authService.register(this.regName, cleanRegMobile, this.regPassword);
     if (res.success) {
       this.dismiss();
     } else {
+      this.registerErrorMessage.set(res.message);
+      if (res.alreadyRegistered || res.message.toLowerCase().includes('already registered')) {
+        this.isAlreadyRegistered.set(true);
+      }
       this.toastService.show(res.message, 'error');
     }
   }
 
   async handleResetPassword(): Promise<void> {
-    if (!this.forgotMobile || this.forgotMobile.length !== 10) {
-      this.toastService.show('Please enter a valid 10-digit mobile number', 'warning');
+    this.forgotErrorMessage.set(null);
+
+    const cleanForgotMobile = (this.forgotMobile || '').replace(/\D/g, '').slice(-10);
+    if (!cleanForgotMobile || cleanForgotMobile.length !== 10) {
+      const msg = 'Please enter a valid 10-digit mobile number.';
+      this.forgotErrorMessage.set(msg);
+      this.toastService.show(msg, 'warning');
       return;
     }
     if (!this.forgotNewPassword || this.forgotNewPassword.length < 4) {
-      this.toastService.show('New password must be at least 4 characters', 'warning');
+      const msg = 'New password must be at least 4 characters long.';
+      this.forgotErrorMessage.set(msg);
+      this.toastService.show(msg, 'warning');
       return;
     }
 
-    const res = await this.authService.resetPassword(this.forgotMobile, this.forgotNewPassword);
+    const res = await this.authService.resetPassword(cleanForgotMobile, this.forgotNewPassword);
     if (res.success) {
       this.dismiss();
     } else {
+      this.forgotErrorMessage.set(res.message);
       this.toastService.show(res.message, 'error');
     }
   }

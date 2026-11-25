@@ -63,7 +63,7 @@ export class AuthService {
     name: string,
     mobileNumber: string,
     password: string
-  ): Promise<{ success: boolean; message: string }> {
+  ): Promise<{ success: boolean; alreadyRegistered?: boolean; message: string }> {
     const cleanMobile = mobileNumber.replace(/\D/g, '').slice(-10);
     if (!cleanMobile || cleanMobile.length !== 10) {
       return { success: false, message: 'Please enter a valid 10-digit mobile number' };
@@ -78,17 +78,27 @@ export class AuthService {
     this.isLoading.set(true);
 
     try {
-      // 1. Check if user already exists
-      const checkRes = await fetch(`${this.FIRESTORE_USERS_URL}/${cleanMobile}`);
+      // 1. Check if user already exists (no-store prevents stale 404 caching)
+      const checkRes = await fetch(`${this.FIRESTORE_USERS_URL}/${cleanMobile}`, {
+        cache: 'no-store'
+      });
       if (checkRes.ok) {
         this.isLoading.set(false);
-        return { success: false, message: 'Mobile number already registered. Please login.' };
+        return {
+          success: false,
+          alreadyRegistered: true,
+          message: 'You are already registered with this mobile number! Please login.'
+        };
+      }
+      if (checkRes.status !== 404) {
+        this.isLoading.set(false);
+        return { success: false, message: 'Could not verify mobile number right now. Please try again.' };
       }
 
       // 2. Hash password with SHA-256 before storing in Firestore
       const securePassword = await this.hashPassword(password);
 
-      // 3. Create user document in Firestore
+      // 3. Create user document atomically in Firestore (precondition prevents overwriting existing account)
       const now = new Date().toISOString();
       const payload = {
         fields: {
@@ -99,13 +109,24 @@ export class AuthService {
         }
       };
 
-      const createRes = await fetch(`${this.FIRESTORE_USERS_URL}/${cleanMobile}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
+      const createRes = await fetch(
+        `${this.FIRESTORE_USERS_URL}/${cleanMobile}?currentDocument.exists=false`,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        }
+      );
 
       this.isLoading.set(false);
+
+      if (createRes.status === 409) {
+        return {
+          success: false,
+          alreadyRegistered: true,
+          message: 'You are already registered with this mobile number! Please login.'
+        };
+      }
 
       if (createRes.ok) {
         const newUser: UserProfile = {
@@ -145,7 +166,9 @@ export class AuthService {
     this.isLoading.set(true);
 
     try {
-      const res = await fetch(`${this.FIRESTORE_USERS_URL}/${cleanMobile}`);
+      const res = await fetch(`${this.FIRESTORE_USERS_URL}/${cleanMobile}`, {
+        cache: 'no-store'
+      });
       this.isLoading.set(false);
 
       if (!res.ok) {
@@ -204,7 +227,9 @@ export class AuthService {
 
     try {
       // 1. Verify user exists
-      const checkRes = await fetch(`${this.FIRESTORE_USERS_URL}/${cleanMobile}`);
+      const checkRes = await fetch(`${this.FIRESTORE_USERS_URL}/${cleanMobile}`, {
+        cache: 'no-store'
+      });
       if (!checkRes.ok) {
         this.isLoading.set(false);
         return { success: false, message: 'No registered account found with this mobile number.' };

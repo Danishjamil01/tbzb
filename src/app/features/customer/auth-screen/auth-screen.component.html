@@ -113,6 +113,23 @@
           <p class="sub-heading">Join The Bite Zone Bidar for hot doorstep food delivery</p>
         </div>
 
+        @if (registerErrorMessage()) {
+          <div class="auth-error-banner" [class.not-found]="isAlreadyRegistered()">
+            <div class="banner-icon">
+              <app-icon name="alert-circle" [size]="18" />
+            </div>
+            <div class="banner-body">
+              <span class="banner-text">{{ registerErrorMessage() }}</span>
+              @if (isAlreadyRegistered()) {
+                <button type="button" class="btn-create-now-pill" (click)="switchToLoginWithMobile()">
+                  <span>Login Now</span>
+                  <app-icon name="arrow-right" [size]="13" />
+                </button>
+              }
+            </div>
+          </div>
+        }
+
         <form (ngSubmit)="handleRegister()" class="auth-form">
           <!-- Full Name -->
           <div class="input-field-group">
@@ -196,6 +213,17 @@
           <h2 class="main-heading">Reset Password</h2>
           <p class="sub-heading">Enter your registered mobile number to set a new password</p>
         </div>
+
+        @if (forgotErrorMessage()) {
+          <div class="auth-error-banner">
+            <div class="banner-icon">
+              <app-icon name="alert-circle" [size]="18" />
+            </div>
+            <div class="banner-body">
+              <span class="banner-text">{{ forgotErrorMessage() }}</span>
+            </div>
+          </div>
+        }
 
         <form (ngSubmit)="handleResetPassword()" class="auth-form">
           <!-- Mobile Number -->

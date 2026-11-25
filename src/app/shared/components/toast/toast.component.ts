@@ -45,7 +45,7 @@ import { IconComponent } from '../icon/icon.component';
       position: fixed;
       top: 84px;
       right: 20px;
-      z-index: 9999;
+      z-index: 99999999;
       display: flex;
       flex-direction: column;
       gap: 10px;
