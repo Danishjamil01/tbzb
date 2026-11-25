@@ -37,12 +37,12 @@ export class MobileHomeComponent implements OnInit {
   }
 
   readonly quickCategories = [
-    { id: 'all' as FoodCategory, label: 'All Items', emoji: '🍽️', bg: '#FEF3C7' },
-    { id: 'non-veg' as FoodCategory, label: 'Rolls & Meat', emoji: '🍗', bg: '#FEE2E2' },
-    { id: 'veg' as FoodCategory, label: 'Pure Veg', emoji: '🥗', bg: '#DCFCE7' },
-    { id: 'sweets' as FoodCategory, label: 'Kunafa & Sweets', emoji: '🍯', bg: '#FFEDD5' },
-    { id: 'juices' as FoodCategory, label: 'Cold Shakes', emoji: '🥤', bg: '#E0E7FF' },
-    { id: 'south-indian' as FoodCategory, label: 'South Indian', emoji: '🥞', bg: '#F3E8FF' }
+    { id: 'all' as FoodCategory, label: 'All Items', imageUrl: 'images/food/chicken-handi-biryani.jpg', bg: '#FEF3C7' },
+    { id: 'non-veg' as FoodCategory, label: 'Rolls & Meat', imageUrl: 'images/food/chicken-cheese-egg-roll.png', bg: '#FEE2E2' },
+    { id: 'veg' as FoodCategory, label: 'Pure Veg', imageUrl: 'images/food/veg-manchurian.jpg', bg: '#DCFCE7' },
+    { id: 'sweets' as FoodCategory, label: 'Kunafa & Sweets', imageUrl: 'images/food/kunafa-showcase1.png', bg: '#FFEDD5' },
+    { id: 'juices' as FoodCategory, label: 'Cold Shakes', imageUrl: 'images/food/cold-coffee.jpg', bg: '#E0E7FF' },
+    { id: 'south-indian' as FoodCategory, label: 'South Indian', imageUrl: 'images/food/masala-dosa.jpg', bg: '#F3E8FF' }
   ];
 
   goToMenu(catId: FoodCategory): void {

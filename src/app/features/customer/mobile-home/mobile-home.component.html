@@ -71,7 +71,7 @@
         @for (cat of quickCategories; track cat.id) {
           <button class="category-circle-btn" (click)="goToMenu(cat.id)">
             <div class="cat-circle" [style.background-color]="cat.bg">
-              <span class="cat-emoji">{{ cat.emoji }}</span>
+              <img [src]="cat.imageUrl" [alt]="cat.label" class="cat-thumb-img" loading="lazy" />
             </div>
             <span class="cat-name">{{ cat.label }}</span>
           </button>

@@ -13,9 +13,9 @@
         </div>
         <span class="loc-sub">
           @if (platformService.isLocating()) {
-            Locating your real area...
+          Locating your real area...
           } @else {
-            Doorstep Delivery • 15–25 Mins
+          Doorstep Delivery • 15–25 Mins
           }
         </span>
       </div>
@@ -35,20 +35,13 @@
   <div class="search-row">
     <div class="search-input-wrap">
       <app-icon name="search" [size]="18" extraClass="search-icon" />
-      <input
-        type="text"
-        [(ngModel)]="searchQuery"
-        (ngModelChange)="onSearchChange($event)"
-        placeholder="Search Rolls, Biryani, Starters, Drinks..."
-        class="search-input"
-        aria-label="Search Dishes"
-      />
+      <input type="text" [(ngModel)]="searchQuery" (ngModelChange)="onSearchChange($event)"
+        placeholder="Search Rolls, Biryani, Starters, Drinks..." class="search-input" aria-label="Search Dishes" />
       @if (searchQuery) {
-        <button class="clear-btn" (click)="clearSearch()" aria-label="Clear Search">
-          <app-icon name="x" [size]="14" />
-        </button>
+      <button class="clear-btn" (click)="clearSearch()" aria-label="Clear Search">
+        <app-icon name="x" [size]="14" />
+      </button>
       }
     </div>
   </div>
 </header>
-
