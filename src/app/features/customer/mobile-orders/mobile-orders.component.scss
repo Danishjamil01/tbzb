@@ -9,6 +9,39 @@
 
 .orders-header {
   margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.btn-header-refresh {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 11px;
+  border-radius: 10px;
+  background: #FFFFFF;
+  border: 1px solid #E5E7EB;
+  color: #0F472B;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+
+  &:disabled {
+    opacity: 0.7;
+    cursor: default;
+  }
+
+  .spin {
+    animation: spinIcon 0.9s linear infinite;
+  }
+}
+
+@keyframes spinIcon {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 .orders-title {
@@ -33,6 +66,14 @@
   display: flex;
   flex-direction: column;
   gap: 14px;
+
+  &.is-delivered {
+    border-color: #A7F3D0;
+  }
+
+  &.is-cancelled {
+    border-color: #FECACA;
+  }
 }
 
 .tracking-top {
@@ -47,13 +88,14 @@
   gap: 8px;
 }
 
-.live-pill {
+.live-pill,
+.status-pill {
   display: inline-flex;
   align-items: center;
   gap: 5px;
   background: #DCFCE7;
   color: #15803D;
-  padding: 2px 8px;
+  padding: 3px 9px;
   border-radius: 10px;
   font-size: 10px;
   font-weight: 800;
@@ -65,6 +107,16 @@
     background: #16A34A;
     animation: pulseDot 1.2s infinite;
   }
+}
+
+.delivered-pill {
+  background: #D1FAE5;
+  color: #065F46;
+}
+
+.cancelled-pill {
+  background: #FEE2E2;
+  color: #B91C1C;
 }
 
 @keyframes pulseDot {
@@ -180,6 +232,22 @@
       color: #047857;
     }
   }
+
+  &.delivered-alert {
+    background: #D1FAE5;
+    border-color: #6EE7B7;
+  }
+
+  &.cancelled-alert {
+    background: #FEF2F2;
+    border-color: #FECACA;
+    color: #B91C1C;
+
+    .status-alert-text {
+      strong { color: #991B1B; }
+      span { color: #DC2626; }
+    }
+  }
 }
 
 /* Items list */
@@ -235,9 +303,13 @@
   gap: 10px;
 }
 
-.btn-whatsapp-track, .btn-call-kitchen {
+.btn-whatsapp-track,
+.btn-call-kitchen,
+.btn-order-again,
+.btn-dismiss-order {
   height: 40px;
   border-radius: 10px;
+  border: none;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -254,10 +326,111 @@
   box-shadow: 0 2px 8px rgba(37, 211, 102, 0.3);
 }
 
-.btn-call-kitchen {
+.btn-call-kitchen,
+.btn-order-again {
   background: #0F472B;
   color: #FFFFFF;
   box-shadow: 0 2px 8px rgba(15, 71, 43, 0.3);
+}
+
+.btn-dismiss-order {
+  background: #F3F4F6;
+  color: #111827;
+  border: 1px solid #E5E7EB;
+}
+
+/* Past Orders History */
+.history-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.history-title {
+  font-size: 14px;
+  font-weight: 800;
+  color: #111827;
+  margin: 4px 0 0;
+}
+
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.history-card {
+  background: #FFFFFF;
+  border: 1px solid #E5E7EB;
+  border-radius: 14px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+
+  .hist-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .hist-id {
+    font-size: 12.5px;
+    font-weight: 800;
+    color: #111827;
+  }
+
+  .hist-badge {
+    font-size: 10px;
+    font-weight: 800;
+    padding: 2px 8px;
+    border-radius: 8px;
+    background: #F3F4F6;
+    color: #374151;
+
+    &.hist-delivered {
+      background: #D1FAE5;
+      color: #065F46;
+    }
+
+    &.hist-cancelled {
+      background: #FEE2E2;
+      color: #B91C1C;
+    }
+
+    &.hist-new,
+    &.hist-preparing,
+    &.hist-out_for_delivery {
+      background: #FEF3C7;
+      color: #B45309;
+    }
+  }
+
+  .hist-items {
+    font-size: 12px;
+    color: #4B5563;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .hist-bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 11px;
+    color: #6B7280;
+    padding-top: 4px;
+    border-top: 1px dashed #F3F4F6;
+
+    .hist-total {
+      font-size: 13px;
+      color: #0F472B;
+      font-weight: 800;
+    }
+  }
 }
 
 /* Empty state */

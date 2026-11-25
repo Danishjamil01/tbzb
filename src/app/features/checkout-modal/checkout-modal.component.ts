@@ -1240,7 +1240,7 @@ export class CheckoutModalComponent {
     this.authService.isAuthModalOpen.set(true);
   }
 
-  onSubmitOrder(): void {
+  async onSubmitOrder(): Promise<void> {
     if (!this.authService.isLoggedIn()) {
       this.onRequireLogin();
       return;
@@ -1314,10 +1314,19 @@ export class CheckoutModalComponent {
       status: 'new'
     };
 
-    // 1. Submit directly to Firestore tbzb_orders
-    this.orderService.createOrder(kitchenOrder);
+    // 1. Submit directly to Firestore tbzb_orders and await confirmation
+    const saved = await this.orderService.createOrder(kitchenOrder);
+    if (!saved) {
+      this.isSubmitting = false;
+      this.toastService.show(
+        'Could not send order to kitchen. Please check your internet connection and try again.',
+        'error',
+        'Network Error'
+      );
+      return;
+    }
 
-    // 2. Set as active customer order for in-app tracking
+    // 2. Set as active customer order for in-app live tracking
     this.platformService.setCustomerOrder(kitchenOrder);
 
     // 3. If customer is logged in, auto-save / update their Bidar delivery address on profile

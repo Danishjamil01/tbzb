@@ -1,19 +1,28 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
 import { KitchenOrder, OrderStatus, PaymentMethod } from '../models/order.model';
 import { ToastService } from './toast.service';
+import { PlatformService } from './platform.service';
+import { AuthService } from './auth.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class OrderService {
   private toastService = inject(ToastService);
+  private platformService = inject(PlatformService);
+  private authService = inject(AuthService);
+
   private readonly FIRESTORE_BASE = 'https://firestore.googleapis.com/v1/projects/tbzb-bidar/databases/(default)/documents/tbzb_orders';
   private pollingTimer: any = null;
+  private customerPollingTimer: any = null;
+  private isSyncingCustomer = false;
   private knownOrderIds = new Set<string>();
 
   // State signals
   orders = signal<KitchenOrder[]>(this.loadCachedOrders());
+  customerOrderHistory = signal<KitchenOrder[]>(this.loadCustomerHistory());
   isFetching = signal<boolean>(false);
+  isCustomerSyncing = signal<boolean>(false);
   soundEnabled = signal<boolean>(this.loadSoundPreference());
   statusFilter = signal<'all' | 'new' | 'preparing' | 'out_for_delivery' | 'delivered'>('all');
 
@@ -37,8 +46,43 @@ export class OrderService {
   constructor() {
     // Populate known IDs from initial cache
     this.orders().forEach(o => this.knownOrderIds.add(o.orderId));
-    // Fetch latest on startup
-    this.fetchOrders(true);
+    // Start real-time live tracking sync for customer orders
+    this.startCustomerOrderPolling();
+
+    // Immediately re-sync whenever app/tab becomes visible again
+    if (typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+          this.syncActiveCustomerOrder(true);
+        }
+      });
+    }
+    if (typeof window !== 'undefined') {
+      window.addEventListener('focus', () => {
+        this.syncActiveCustomerOrder(true);
+      });
+    }
+  }
+
+  private loadCustomerHistory(): KitchenOrder[] {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        const data = localStorage.getItem('tbzb_customer_order_history');
+        if (data) {
+          const parsed = JSON.parse(data);
+          if (Array.isArray(parsed)) return parsed;
+        }
+      }
+    } catch (e) {}
+    return [];
+  }
+
+  private saveCustomerHistory(list: KitchenOrder[]): void {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        localStorage.setItem('tbzb_customer_order_history', JSON.stringify(list));
+      }
+    } catch (e) {}
   }
 
   private loadCachedOrders(): KitchenOrder[] {
@@ -175,13 +219,50 @@ export class OrderService {
   }
 
   /**
-   * Fetch all orders from Firebase Firestore
+   * Parse a single Firestore document into a typed KitchenOrder
+   */
+  private parseFirestoreDoc(doc: any): KitchenOrder {
+    const fields = doc?.fields || {};
+    const orderId = fields.orderId?.stringValue || (doc?.name ? doc.name.split('/').pop() : '');
+    const status = (fields.status?.stringValue as OrderStatus) || 'new';
+
+    let items: any[] = [];
+    try {
+      if (fields.itemsJson?.stringValue) {
+        items = JSON.parse(fields.itemsJson.stringValue);
+      }
+    } catch (e) {}
+
+    return {
+      orderId,
+      createdAt: fields.createdAt?.stringValue || new Date().toISOString(),
+      customerName: fields.customerName?.stringValue || 'Customer',
+      mobileNumber: fields.mobileNumber?.stringValue || '',
+      flatNumber: fields.flatNumber?.stringValue || '',
+      areaLocality: fields.areaLocality?.stringValue || '',
+      landmark: fields.landmark?.stringValue || '',
+      googleMapsUrl: fields.googleMapsUrl?.stringValue || '',
+      paymentMethod: (fields.paymentMethod?.stringValue as PaymentMethod) || 'cod',
+      upiTransactionId: fields.upiTransactionId?.stringValue || '',
+      items,
+      subtotal: parseInt(fields.subtotal?.integerValue || '0', 10),
+      deliveryCharge: parseInt(fields.deliveryCharge?.integerValue || '0', 10),
+      total: parseInt(fields.total?.integerValue || '0', 10),
+      status,
+      updatedAt: fields.updatedAt?.stringValue
+    };
+  }
+
+  /**
+   * Fetch all orders from Firebase Firestore (ordered newest first)
    */
   async fetchOrders(silent = false): Promise<void> {
     if (!silent) this.isFetching.set(true);
 
     try {
-      const res = await fetch(this.FIRESTORE_BASE);
+      const res = await fetch(`${this.FIRESTORE_BASE}?orderBy=createdAt%20desc&pageSize=50`, {
+        cache: 'no-store'
+      });
       if (!res.ok) {
         if (!silent) this.toastService.show('Could not fetch cloud orders', 'warning');
         return;
@@ -193,41 +274,12 @@ export class OrderService {
       let hasNewIncomingOrder = false;
 
       const loadedOrders: KitchenOrder[] = docs.map(doc => {
-        const fields = doc.fields || {};
-        const orderId = fields.orderId?.stringValue || doc.name.split('/').pop();
-        const status = (fields.status?.stringValue as OrderStatus) || 'new';
-
-        // Check if an unread new order has arrived
-        if (!this.knownOrderIds.has(orderId) && status === 'new') {
+        const parsed = this.parseFirestoreDoc(doc);
+        if (!this.knownOrderIds.has(parsed.orderId) && parsed.status === 'new') {
           hasNewIncomingOrder = true;
         }
-        this.knownOrderIds.add(orderId);
-
-        let items: any[] = [];
-        try {
-          if (fields.itemsJson?.stringValue) {
-            items = JSON.parse(fields.itemsJson.stringValue);
-          }
-        } catch (e) {}
-
-        return {
-          orderId,
-          createdAt: fields.createdAt?.stringValue || new Date().toISOString(),
-          customerName: fields.customerName?.stringValue || 'Customer',
-          mobileNumber: fields.mobileNumber?.stringValue || '',
-          flatNumber: fields.flatNumber?.stringValue || '',
-          areaLocality: fields.areaLocality?.stringValue || '',
-          landmark: fields.landmark?.stringValue || '',
-          googleMapsUrl: fields.googleMapsUrl?.stringValue || '',
-          paymentMethod: (fields.paymentMethod?.stringValue as PaymentMethod) || 'cod',
-          upiTransactionId: fields.upiTransactionId?.stringValue || '',
-          items,
-          subtotal: parseInt(fields.subtotal?.integerValue || '0', 10),
-          deliveryCharge: parseInt(fields.deliveryCharge?.integerValue || '0', 10),
-          total: parseInt(fields.total?.integerValue || '0', 10),
-          status,
-          updatedAt: fields.updatedAt?.stringValue
-        };
+        this.knownOrderIds.add(parsed.orderId);
+        return parsed;
       });
 
       // Sort newest first
@@ -250,6 +302,128 @@ export class OrderService {
       }
     } finally {
       if (!silent) this.isFetching.set(false);
+    }
+  }
+
+  /**
+   * Live-sync the customer's active order status and history directly from Firestore
+   */
+  async syncActiveCustomerOrder(silent = true): Promise<void> {
+    if (this.isSyncingCustomer) return;
+    this.isSyncingCustomer = true;
+    if (!silent) this.isCustomerSyncing.set(true);
+
+    try {
+      const active = this.platformService.customerActiveOrder();
+      const user = this.authService.currentUser();
+      const userPhone = (user?.mobileNumber || '').replace(/\D/g, '').slice(-10);
+
+      // 1. Direct real-time fetch of active order document
+      if (active?.orderId) {
+        try {
+          const res = await fetch(`${this.FIRESTORE_BASE}/${active.orderId}`, {
+            cache: 'no-store'
+          });
+          if (res.ok) {
+            const doc = await res.json();
+            const freshOrder = this.parseFirestoreDoc(doc);
+
+            if (freshOrder.status !== active.status) {
+              this.platformService.setCustomerOrder(freshOrder);
+              this.notifyCustomerStatusChange(freshOrder);
+            } else if (freshOrder.updatedAt !== active.updatedAt) {
+              this.platformService.setCustomerOrder(freshOrder);
+            }
+          }
+        } catch (e) {
+          // Ignore transient network hiccup
+        }
+      }
+
+      // 2. Sync customer order history by logged-in mobile number (or when explicitly refreshing / viewing orders tab)
+      const shouldFetchHistory =
+        userPhone.length === 10 &&
+        (!silent || this.platformService.activeTab() === 'orders' || !active);
+
+      if (shouldFetchHistory) {
+        try {
+          const histRes = await fetch(`${this.FIRESTORE_BASE}?orderBy=createdAt%20desc&pageSize=50`, {
+            cache: 'no-store'
+          });
+          if (histRes.ok) {
+            const histData = await histRes.json();
+            const docs: any[] = histData?.documents || [];
+            const myOrders = docs
+              .map(d => this.parseFirestoreDoc(d))
+              .filter(o => (o.mobileNumber || '').replace(/\D/g, '').slice(-10) === userPhone)
+              .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+            this.customerOrderHistory.set(myOrders);
+            this.saveCustomerHistory(myOrders);
+
+            // If customer doesn't have an active tracked order locally, restore latest active order from cloud
+            const currentActive = this.platformService.customerActiveOrder();
+            if (!currentActive && myOrders.length > 0) {
+              const ongoing = myOrders.find(
+                o => o.status === 'new' || o.status === 'preparing' || o.status === 'out_for_delivery'
+              );
+              if (ongoing) {
+                this.platformService.setCustomerOrder(ongoing);
+              }
+            }
+          }
+        } catch (e) {
+          // Ignore network error
+        }
+      }
+
+      if (!silent) {
+        this.toastService.show('Order status synced live', 'info');
+      }
+    } finally {
+      this.isSyncingCustomer = false;
+      if (!silent) this.isCustomerSyncing.set(false);
+    }
+  }
+
+  private notifyCustomerStatusChange(order: KitchenOrder): void {
+    this.playNotificationSound();
+    switch (order.status) {
+      case 'preparing':
+        this.toastService.show(`Chef started preparing Order #${order.orderId}!`, 'info', 'Cooking Started');
+        break;
+      case 'out_for_delivery':
+        this.toastService.show(`Order #${order.orderId} is on the way to you!`, 'info', 'Out for Delivery');
+        break;
+      case 'delivered':
+        this.toastService.show(`Order #${order.orderId} delivered! Enjoy your meal!`, 'success', 'Delivered');
+        break;
+      case 'cancelled':
+        this.toastService.show(`Order #${order.orderId} was cancelled by the kitchen.`, 'error', 'Order Cancelled');
+        break;
+    }
+  }
+
+  startCustomerOrderPolling(intervalMs = 5000): void {
+    if (this.customerPollingTimer) return;
+    this.syncActiveCustomerOrder(true);
+    this.customerPollingTimer = setInterval(() => {
+      const active = this.platformService.customerActiveOrder();
+      const isOngoing =
+        active &&
+        (active.status === 'new' || active.status === 'preparing' || active.status === 'out_for_delivery');
+      const isViewingOrders = this.platformService.activeTab() === 'orders';
+
+      if (isOngoing || isViewingOrders) {
+        this.syncActiveCustomerOrder(true);
+      }
+    }, intervalMs);
+  }
+
+  stopCustomerOrderPolling(): void {
+    if (this.customerPollingTimer) {
+      clearInterval(this.customerPollingTimer);
+      this.customerPollingTimer = null;
     }
   }
 

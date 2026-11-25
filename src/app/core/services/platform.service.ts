@@ -160,7 +160,11 @@ export class PlatformService {
     this.customerActiveOrder.set(order);
     try {
       if (typeof window !== 'undefined') {
-        localStorage.setItem('tbzb_customer_last_order', JSON.stringify(order));
+        if (order) {
+          localStorage.setItem('tbzb_customer_last_order', JSON.stringify(order));
+        } else {
+          localStorage.removeItem('tbzb_customer_last_order');
+        }
       }
     } catch (e) { }
   }

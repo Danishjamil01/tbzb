@@ -1,65 +1,89 @@
 <div class="mobile-orders-container">
   <div class="orders-header">
-    <h2 class="orders-title">Your Orders</h2>
-    <span class="orders-sub">Live tracking & order history</span>
+    <div>
+      <h2 class="orders-title">Your Orders</h2>
+      <span class="orders-sub">Live tracking & order history</span>
+    </div>
+    <button
+      type="button"
+      class="btn-header-refresh"
+      (click)="refreshStatus()"
+      [disabled]="orderService.isCustomerSyncing()"
+      title="Refresh order status"
+    >
+      <app-icon name="refresh-cw" [size]="15" [extraClass]="orderService.isCustomerSyncing() ? 'spin' : ''" />
+      <span>{{ orderService.isCustomerSyncing() ? 'Syncing...' : 'Refresh' }}</span>
+    </button>
   </div>
 
   <!-- Active Order Card -->
   @if (activeOrder(); as ord) {
-    <div class="active-tracking-card">
+    <div class="active-tracking-card" [class.is-delivered]="ord.status === 'delivered'" [class.is-cancelled]="ord.status === 'cancelled'">
       <div class="tracking-top">
         <div class="order-id-meta">
-          <span class="live-pill">
-            <span class="pulse-dot"></span> LIVE ORDER
-          </span>
+          @if (ord.status === 'delivered') {
+            <span class="status-pill delivered-pill">
+              <app-icon name="check-circle" [size]="11" /> DELIVERED
+            </span>
+          } @else if (ord.status === 'cancelled') {
+            <span class="status-pill cancelled-pill">
+              <app-icon name="alert-circle" [size]="11" /> CANCELLED
+            </span>
+          } @else {
+            <span class="live-pill">
+              <span class="pulse-dot"></span> LIVE ORDER
+            </span>
+          }
           <span class="order-ref">#{{ ord.orderId }}</span>
         </div>
         <span class="order-time">{{ ord.createdAt ? (ord.createdAt | date:'shortTime') : 'Just now' }}</span>
       </div>
 
-      <!-- Visual Progress Tracker -->
-      <div class="progress-tracker">
-        <div class="step-item" [class.done]="isStepDone(ord.status, 1)" [class.current]="ord.status === 'new'">
-          <div class="step-circle">
-            <app-icon name="check" [size]="12" />
+      <!-- Visual Progress Tracker (hidden when cancelled) -->
+      @if (ord.status !== 'cancelled') {
+        <div class="progress-tracker">
+          <div class="step-item" [class.done]="isStepDone(ord.status, 1)" [class.current]="ord.status === 'new'">
+            <div class="step-circle">
+              <app-icon name="check" [size]="12" />
+            </div>
+            <span class="step-label">Placed</span>
           </div>
-          <span class="step-label">Placed</span>
-        </div>
 
-        <div class="step-line" [class.filled]="isStepDone(ord.status, 2)"></div>
+          <div class="step-line" [class.filled]="isStepDone(ord.status, 2)"></div>
 
-        <div class="step-item" [class.done]="isStepDone(ord.status, 2)" [class.current]="ord.status === 'preparing'">
-          <div class="step-circle">
-            <app-icon name="chef-hat" [size]="12" />
+          <div class="step-item" [class.done]="isStepDone(ord.status, 2)" [class.current]="ord.status === 'preparing'">
+            <div class="step-circle">
+              <app-icon name="chef-hat" [size]="12" />
+            </div>
+            <span class="step-label">Cooking</span>
           </div>
-          <span class="step-label">Cooking</span>
-        </div>
 
-        <div class="step-line" [class.filled]="isStepDone(ord.status, 3)"></div>
+          <div class="step-line" [class.filled]="isStepDone(ord.status, 3)"></div>
 
-        <div class="step-item" [class.done]="isStepDone(ord.status, 3)" [class.current]="ord.status === 'out_for_delivery'">
-          <div class="step-circle">
-            <app-icon name="delivery-scooter" [size]="12" />
+          <div class="step-item" [class.done]="isStepDone(ord.status, 3)" [class.current]="ord.status === 'out_for_delivery'">
+            <div class="step-circle">
+              <app-icon name="delivery-scooter" [size]="12" />
+            </div>
+            <span class="step-label">On Way</span>
           </div>
-          <span class="step-label">On Way</span>
-        </div>
 
-        <div class="step-line" [class.filled]="ord.status === 'delivered'"></div>
+          <div class="step-line" [class.filled]="ord.status === 'delivered'"></div>
 
-        <div class="step-item" [class.done]="ord.status === 'delivered'">
-          <div class="step-circle">
-            <app-icon name="check-circle" [size]="12" />
+          <div class="step-item" [class.done]="ord.status === 'delivered'">
+            <div class="step-circle">
+              <app-icon name="check-circle" [size]="12" />
+            </div>
+            <span class="step-label">Delivered</span>
           </div>
-          <span class="step-label">Delivered</span>
         </div>
-      </div>
+      }
 
       <!-- Status Message Box -->
-      <div class="status-alert-box">
-        <app-icon name="clock" [size]="16" />
+      <div class="status-alert-box" [class.cancelled-alert]="ord.status === 'cancelled'" [class.delivered-alert]="ord.status === 'delivered'">
+        <app-icon [name]="ord.status === 'cancelled' ? 'alert-circle' : (ord.status === 'delivered' ? 'check-circle' : 'clock')" [size]="17" />
         <div class="status-alert-text">
           <strong>{{ getStatusMessage(ord.status) }}</strong>
-          <span>Estimated delivery: 20-30 minutes within Bidar</span>
+          <span>{{ getStatusSubMessage(ord.status) }}</span>
         </div>
       </div>
 
@@ -83,14 +107,25 @@
 
       <!-- Quick Action Buttons -->
       <div class="action-buttons-row">
-        <a [href]="getWhatsAppUrl(ord)" target="_blank" class="btn-whatsapp-track">
-          <app-icon name="whatsapp" [size]="16" />
-          <span>WhatsApp Kitchen</span>
-        </a>
-        <a [href]="'tel:' + config.contact.phone" class="btn-call-kitchen">
-          <app-icon name="phone" [size]="16" />
-          <span>Call Kitchen</span>
-        </a>
+        @if (ord.status === 'delivered' || ord.status === 'cancelled') {
+          <button type="button" class="btn-order-again" (click)="platformService.setTab('menu')">
+            <app-icon name="utensils" [size]="16" />
+            <span>Order Again</span>
+          </button>
+          <button type="button" class="btn-dismiss-order" (click)="clearCompletedOrder()">
+            <app-icon name="check" [size]="16" />
+            <span>Done</span>
+          </button>
+        } @else {
+          <a [href]="getWhatsAppUrl(ord)" target="_blank" class="btn-whatsapp-track">
+            <app-icon name="whatsapp" [size]="16" />
+            <span>Support Chat</span>
+          </a>
+          <a [href]="'tel:' + config.contact.phone" class="btn-call-kitchen">
+            <app-icon name="phone" [size]="16" />
+            <span>Call Kitchen</span>
+          </a>
+        }
       </div>
     </div>
   } @else {
@@ -110,6 +145,37 @@
     </div>
   }
 
+  <!-- Past Orders History -->
+  @if (pastOrders().length > 0) {
+    <div class="history-section">
+      <h3 class="history-title">Past Orders</h3>
+      <div class="history-list">
+        @for (hist of pastOrders(); track hist.orderId) {
+          <div class="history-card" (click)="trackOrder(hist)">
+            <div class="hist-top">
+              <span class="hist-id">#{{ hist.orderId }}</span>
+              <span class="hist-badge" [class]="'hist-' + hist.status">
+                {{ getStatusBadgeLabel(hist.status) }}
+              </span>
+            </div>
+            <div class="hist-items">
+              @for (item of hist.items.slice(0, 2); track item.name; let last = $last) {
+                <span>{{ item.quantity }}x {{ item.name }}@if (!last || hist.items.length > 2) {, }</span>
+              }
+              @if (hist.items.length > 2) {
+                <span>+{{ hist.items.length - 2 }} more</span>
+              }
+            </div>
+            <div class="hist-bottom">
+              <span class="hist-date">{{ hist.createdAt | date:'mediumDate' }} • {{ hist.createdAt | date:'shortTime' }}</span>
+              <strong class="hist-total">{{ hist.total | inr }}</strong>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  }
+
   <!-- Delivery Guarantee Banner -->
   <div class="guarantee-card">
     <app-icon name="shield-check" [size]="20" />
@@ -119,4 +185,3 @@
     </div>
   </div>
 </div>
-
