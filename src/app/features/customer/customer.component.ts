@@ -12,7 +12,7 @@ import { MobileCartComponent } from './mobile-cart/mobile-cart.component';
 import { MobileMoreComponent } from './mobile-more/mobile-more.component';
 import { PlatformService } from '../../core/services/platform.service';
 import { AuthService } from '../../core/services/auth.service';
-import { StatusBarService } from '../../core/services/status-bar.service';
+import { StatusBarService, HOME_HERO_STATUS_BG } from '../../core/services/status-bar.service';
 import { CartService } from '../../core/services/cart.service';
 
 @Component({
@@ -66,7 +66,7 @@ export class CustomerComponent implements OnInit {
       ) {
         this.statusBarService.setLightMode('#FFFFFF');
       } else if (this.platformService.activeTab() === 'home') {
-        this.statusBarService.setDarkMode('#DC2626');
+        this.statusBarService.setLightMode(HOME_HERO_STATUS_BG);
       } else {
         this.statusBarService.setDarkMode('#092819');
       }

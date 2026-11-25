@@ -1,4 +1,4 @@
-<header class="mobile-header">
+<header class="mobile-header" [class.light-home-header]="platformService.activeTab() === 'home'">
   <!-- Top Delivery & Info Row -->
   <div class="top-row">
     <!-- Real Fetched GPS Location -->

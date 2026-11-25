@@ -2,6 +2,8 @@ import { Injectable } from '@angular/core';
 import { Capacitor, registerPlugin } from '@capacitor/core';
 import { StatusBar, Style } from '@capacitor/status-bar';
 
+export const HOME_HERO_STATUS_BG = '#FFF6E5';
+
 interface EdgeStatusBarPlugin {
   setBar(options: { color: string; isLight: boolean }): Promise<void>;
 }
@@ -27,7 +29,7 @@ export class StatusBarService {
   }
 
   /**
-   * Set status bar to Dark (e.g. Red #DC2626 or Dark green #092819 background with white text/icons)
+   * Set status bar to Dark (e.g. Dark green #092819 background with white text/icons)
    */
   async setDarkMode(color: string = '#092819'): Promise<void> {
     await this.applyStatusBar(color, Style.Dark);

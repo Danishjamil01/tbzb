@@ -10,6 +10,62 @@
   z-index: 100;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
   border-bottom: 1px solid rgba(245, 158, 11, 0.2);
+  transition: background 0.18s ease, color 0.18s ease;
+
+  &.light-home-header {
+    background: #FFF6E5;
+    color: #0B2F1D;
+    padding: 8px 14px 10px;
+    box-shadow: none;
+    border-bottom: none;
+
+    .pin-icon-wrap {
+      background: rgba(15, 71, 43, 0.09);
+      border-color: rgba(15, 71, 43, 0.16);
+      color: #0F472B;
+    }
+
+    .loc-headline {
+      .city-title {
+        color: #0B2F1D;
+      }
+
+      app-icon {
+        color: #0F472B;
+      }
+    }
+
+    .loc-sub {
+      color: #78716C;
+    }
+
+    .status-pill {
+      background: #FEE2E2;
+      border-color: #FECACA;
+      color: #B91C1C;
+
+      .dot {
+        background: #DC2626;
+      }
+
+      &.open {
+        background: #DCFCE7;
+        border-color: #BBF7D0;
+        color: #166534;
+
+        .dot {
+          background: #16A34A;
+          box-shadow: 0 0 6px rgba(22, 163, 74, 0.45);
+        }
+      }
+    }
+
+    .search-input-wrap {
+      background: #FFFFFF;
+      border: 1px solid rgba(217, 119, 6, 0.18);
+      box-shadow: 0 4px 12px rgba(120, 83, 18, 0.06);
+    }
+  }
 }
 
 .top-row {

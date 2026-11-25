@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { PlatformService } from '../../../core/services/platform.service';
 import { MenuService } from '../../../core/services/menu.service';
 import { CartService } from '../../../core/services/cart.service';
-import { StatusBarService } from '../../../core/services/status-bar.service';
+import { StatusBarService, HOME_HERO_STATUS_BG } from '../../../core/services/status-bar.service';
 import { MenuItem, FoodCategory } from '../../../core/models/menu.model';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { InrPipe } from '../../../shared/pipes/inr.pipe';
@@ -22,8 +22,8 @@ export class MobileHomeComponent implements OnInit {
   private statusBarService = inject(StatusBarService);
 
   ngOnInit(): void {
-    // Set mobile status bar color to red (#DC2626) on the Home page
-    this.statusBarService.setDarkMode('#DC2626');
+    // Sync status bar color + dark icons with the unified light Home Hero canopy
+    this.statusBarService.setLightMode(HOME_HERO_STATUS_BG);
   }
 
   featuredItems = this.menuService.featuredItems;
