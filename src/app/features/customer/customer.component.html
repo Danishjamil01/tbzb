@@ -20,7 +20,10 @@
 <!-- 4. Customer Mobile App Layout -->
 <div class="mobile-app-layout">
   <!-- Top Mobile App Header -->
-  <app-mobile-header (openHoursModal)="openHoursModal.emit()"></app-mobile-header>
+  <app-mobile-header
+    (openHoursModal)="openHoursModal.emit()"
+    (openLocationModal)="showLocationScreen.set(true)"
+  ></app-mobile-header>
 
   <!-- Main Content Tab Switcher -->
   <main class="mobile-app-main" id="mobile-main">

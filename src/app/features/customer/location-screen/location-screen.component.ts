@@ -1,9 +1,27 @@
-import { Component, inject, OnInit, OnDestroy, Output, EventEmitter, signal } from '@angular/core';
+import {
+  Component,
+  inject,
+  OnInit,
+  AfterViewInit,
+  OnDestroy,
+  Output,
+  EventEmitter,
+  signal,
+  ViewChild,
+  ElementRef
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+import * as L from 'leaflet';
 import { PlatformService } from '../../../core/services/platform.service';
 import { ToastService } from '../../../core/services/toast.service';
+import {
+  LocationService,
+  VERIFIED_BIDAR_LOCALITIES,
+  BidarLocality,
+  AddressSuggestion
+} from '../../../core/services/location.service';
+import { BUSINESS_CONFIG } from '../../../core/config/business.config';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 
 @Component({
@@ -13,273 +31,312 @@ import { IconComponent } from '../../../shared/components/icon/icon.component';
   templateUrl: './location-screen.component.html',
   styleUrl: './location-screen.component.scss'
 })
-export class LocationScreenComponent implements OnInit, OnDestroy {
+export class LocationScreenComponent implements OnInit, AfterViewInit, OnDestroy {
   platformService = inject(PlatformService);
-  private sanitizer = inject(DomSanitizer);
+  private locationService = inject(LocationService);
   private toastService = inject(ToastService);
 
+  @ViewChild('leafletMap') mapContainer?: ElementRef<HTMLDivElement>;
   @Output() locationConfirmed = new EventEmitter<string>();
+
+  readonly config = BUSINESS_CONFIG.location;
+  readonly bidarLocalities = VERIFIED_BIDAR_LOCALITIES;
+  readonly quickChips = VERIFIED_BIDAR_LOCALITIES.slice(0, 6);
 
   isLoadingGps = signal<boolean>(true);
   isDismissing = signal<boolean>(false);
-  detectedLocationName = signal<string | null>(null);
-  detectedCoords = signal<{ lat: number; lng: number } | null>(null);
-  safeMapUrl = signal<SafeResourceUrl | null>(null);
+  isSearching = signal<boolean>(false);
   showPopularAreas = signal<boolean>(false);
 
-  // Outside Bidar Geofence info (informational at login, restricted at checkout)
+  detectedLocationName = signal<string | null>(null);
+  fullResolvedAddress = signal<string | null>(null);
+  detectedCoords = signal<{ lat: number; lng: number } | null>(null);
+  isVerifiedPoint = signal<boolean>(false);
+  gpsErrorMsg = signal<string | null>(null);
+
+  // Delivery Zone Status (Haversine distance from Vidya Nagar Kitchen)
   isOutsideBidar = signal<boolean>(false);
-  outsideDistanceKm = signal<number | null>(null);
+  distanceFromKitchenKm = signal<number | null>(null);
   outsideCityName = signal<string | null>(null);
 
-  // Editable delivery area / location (pre-filled with real user location)
-  customAreaInput: string = '';
+  // Search Autocomplete
+  searchInput: string = '';
+  suggestions = signal<AddressSuggestion[]>([]);
+  private searchTimer: any = null;
 
-  readonly bidarAreas = [
-    'Gandhi Gunj',
-    'Naubad',
-    'Shivnagar',
-    'Gumpa',
-    'Mailoor',
-    'Railway Station Road',
-    'Civil Hospital Road',
-    'Bidar Fort Area',
-    'Halladkeri',
-    'Manhalli Road',
-    'Noor Khan Taleem',
-    'Chidri Road',
-    'Udgir Road'
-  ];
-
-  readonly quickChips = [
-    'Gandhi Gunj',
-    'Naubad',
-    'Shivnagar',
-    'Gumpa',
-    'Mailoor',
-    'Bidar Fort Area'
-  ];
-
-  // Bidar Kitchen Coordinates (TBZB Kitchen Center)
-  private readonly BIDAR_KITCHEN_LAT = 17.8953023;
-  private readonly BIDAR_KITCHEN_LNG = 77.5022301;
-  private readonly MAX_DELIVERY_RADIUS_KM = 25; // Bidar delivery radius
+  // Leaflet Map Instances
+  private map: L.Map | null = null;
+  private userMarker: L.Marker | null = null;
+  private kitchenMarker: L.Marker | null = null;
+  private radiusCircle: L.Circle | null = null;
 
   ngOnInit(): void {
-    const existingCoords = this.platformService.userCoordinates();
+    const existingCoords = this.platformService.deviceGpsCoordinates() || this.platformService.userCoordinates();
     if (existingCoords) {
-      this.updateMapCoordinates(existingCoords.lat, existingCoords.lng);
       this.detectedCoords.set(existingCoords);
     }
-
     const existingName = this.platformService.userLocationName();
-    if (existingName) {
-      this.customAreaInput = existingName;
+    if (existingName && !existingName.includes('Detecting') && !existingName.includes('Verify')) {
+      this.searchInput = existingName;
       this.detectedLocationName.set(existingName);
     }
-
-    // Trigger real live location detection immediately
-    this.detectLiveLocation();
   }
 
-  calculateDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
-    const R = 6371; // Earth radius in km
-    const dLat = (lat2 - lat1) * (Math.PI / 180);
-    const dLon = (lon2 - lon1) * (Math.PI / 180);
-    const a =
-      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
-      Math.sin(dLon / 2) * Math.sin(dLon / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c;
+  ngAfterViewInit(): void {
+    if (typeof window !== 'undefined') {
+      this.initLeafletMap();
+      // Always fetch real live GPS right after screen opens (e.g. immediately after login)
+      this.detectLiveLocation();
+    }
+  }
+
+  private initLeafletMap(): void {
+    const el = this.mapContainer?.nativeElement;
+    if (!el || this.map) return;
+
+    const initialCoords = this.detectedCoords() || {
+      lat: this.config.latitude,
+      lng: this.config.longitude
+    };
+
+    this.map = L.map(el, {
+      center: [initialCoords.lat, initialCoords.lng],
+      zoom: 15,
+      zoomControl: true,
+      attributionControl: false
+    });
+
+    // OpenStreetMap Tile Layer
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19
+    }).addTo(this.map);
+
+    // 18 km Bidar Delivery Radius Overlay around TBZB Kitchen
+    this.radiusCircle = L.circle([this.config.latitude, this.config.longitude], {
+      radius: this.config.maxDeliveryRadiusKm * 1000,
+      color: '#0F472B',
+      weight: 2,
+      dashArray: '6, 6',
+      fillColor: '#10B981',
+      fillOpacity: 0.08
+    }).addTo(this.map);
+
+    // Kitchen Marker (Vidya Nagar, Bidar)
+    const kitchenIcon = L.divIcon({
+      className: 'tbzb-kitchen-pin',
+      html: `<div style="background:#0F472B;color:#FBBF24;padding:4px 8px;border-radius:12px;font-size:10px;font-weight:800;white-space:nowrap;border:2px solid #fff;box-shadow:0 3px 8px rgba(0,0,0,0.35);">TBZB Kitchen</div>`,
+      iconSize: [88, 26],
+      iconAnchor: [44, 13]
+    });
+
+    this.kitchenMarker = L.marker([this.config.latitude, this.config.longitude], {
+      icon: kitchenIcon,
+      interactive: false
+    }).addTo(this.map);
+
+    // Allow user to tap anywhere on map to drop/move delivery pin cleanly
+    this.map.on('click', (e: L.LeafletMouseEvent) => {
+      const lat = Number(e.latlng.lat.toFixed(6));
+      const lng = Number(e.latlng.lng.toFixed(6));
+      this.onManualMapPinMove(lat, lng);
+    });
+
+    // Fix Leaflet tile sizing after slide-in animation finishes
+    setTimeout(() => {
+      this.map?.invalidateSize();
+    }, 380);
+  }
+
+  private setUserMapPin(lat: number, lng: number, panZoom: boolean = true): void {
+    if (!this.map) return;
+
+    const pinIcon = L.divIcon({
+      className: 'tbzb-user-pin',
+      html: `<div style="width:28px;height:28px;display:flex;align-items:center;justify-content:center;background:#DC2626;color:#fff;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:2.5px solid #fff;box-shadow:0 4px 10px rgba(0,0,0,0.35);"><span style="transform:rotate(45deg);font-size:13px;font-weight:800;">●</span></div>`,
+      iconSize: [28, 28],
+      iconAnchor: [14, 28]
+    });
+
+    if (this.userMarker) {
+      this.userMarker.setLatLng([lat, lng]);
+    } else {
+      this.userMarker = L.marker([lat, lng], {
+        icon: pinIcon,
+        draggable: true
+      }).addTo(this.map);
+
+      this.userMarker.on('dragend', () => {
+        if (!this.userMarker) return;
+        const pos = this.userMarker.getLatLng();
+        this.onManualMapPinMove(Number(pos.lat.toFixed(6)), Number(pos.lng.toFixed(6)));
+      });
+    }
+
+    if (panZoom) {
+      this.map.setView([lat, lng], 15, { animate: true });
+    }
+  }
+
+  private async onManualMapPinMove(lat: number, lng: number): Promise<void> {
+    this.isLoadingGps.set(true);
+    this.gpsErrorMsg.set(null);
+    this.setUserMapPin(lat, lng, false);
+    const geo = await this.locationService.reverseGeocode(lat, lng);
+    this.applyVerifiedPoint(geo.shortLabel, geo.fullAddress, lat, lng, false);
   }
 
   async detectLiveLocation(): Promise<void> {
     this.isLoadingGps.set(true);
+    this.gpsErrorMsg.set(null);
+    this.suggestions.set([]);
 
-    // 1. Try real device GPS first (highest accuracy)
-    if (typeof navigator !== 'undefined' && navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        async (pos) => {
-          const { latitude, longitude } = pos.coords;
-          const lat = Number(latitude.toFixed(6));
-          const lng = Number(longitude.toFixed(6));
-          this.applyCoordinates(lat, lng);
+    const gps = await this.locationService.detectRealGpsLocation();
+    if (gps.success && gps.lat !== undefined && gps.lng !== undefined) {
+      this.platformService.deviceGpsCoordinates.set({ lat: gps.lat, lng: gps.lng });
+      this.setUserMapPin(gps.lat, gps.lng, true);
 
-          // Reverse geocode real street / locality / city
-          const realName = await this.reverseGeocode(lat, lng);
-          this.applyResolvedLocation(realName, lat, lng);
-        },
-        async () => {
-          // GPS denied or timed out -> Fallback to real IP geolocation
-          await this.fallbackToIpLocation();
-        },
-        { enableHighAccuracy: true, timeout: 12000, maximumAge: 15000 }
-      );
+      const geo = await this.locationService.reverseGeocode(gps.lat, gps.lng);
+      this.applyVerifiedPoint(geo.shortLabel, geo.fullAddress, gps.lat, gps.lng, true);
     } else {
-      await this.fallbackToIpLocation();
+      this.isLoadingGps.set(false);
+      this.gpsErrorMsg.set(gps.error || 'Could not detect GPS location.');
+      // Keep map centered at Vidya Nagar Kitchen if no GPS yet
+      if (this.map && !this.detectedCoords()) {
+        this.map.setView([this.config.latitude, this.config.longitude], 13);
+      }
+      this.toastService.show(gps.error || 'Please enable GPS permission to verify your exact location.', 'warning');
     }
   }
 
-  private async fallbackToIpLocation(): Promise<void> {
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 4000);
-      const res = await fetch('https://ipwho.is/', { signal: controller.signal });
-      clearTimeout(timeoutId);
-
-      if (res.ok) {
-        const data = await res.json();
-        if (data.success) {
-          const lat = Number(data.latitude);
-          const lng = Number(data.longitude);
-          const city = data.city || '';
-          const region = data.region || data.country || '';
-          const locName = city && region ? `${city}, ${region}` : (city || 'Current Location');
-
-          this.isLoadingGps.set(false);
-          this.detectedLocationName.set(locName);
-
-          const distance = this.calculateDistanceKm(this.BIDAR_KITCHEN_LAT, this.BIDAR_KITCHEN_LNG, lat, lng);
-          if (distance > this.MAX_DELIVERY_RADIUS_KM) {
-            // Note: Mobile cellular IPs in India route through state capitals (Bangalore/Hyderabad).
-            // Do NOT lock platformService.userCoordinates to Bangalore!
-            this.isOutsideBidar.set(true);
-            this.outsideDistanceKm.set(Math.round(distance));
-            this.outsideCityName.set(locName);
-            this.customAreaInput = locName;
-            this.updateMapCoordinates(lat, lng);
-          } else {
-            this.isOutsideBidar.set(false);
-            this.customAreaInput = locName;
-            this.applyCoordinates(lat, lng);
-            this.applyResolvedLocation(locName, lat, lng);
-          }
-          return;
-        }
-      }
-    } catch (e) {
-      // IP fetch failed
-    }
-
-    // Final graceful fallback if both GPS and IP are blocked
+  private applyVerifiedPoint(
+    shortLabel: string,
+    fullAddress: string,
+    lat: number,
+    lng: number,
+    isLiveGps: boolean
+  ): void {
     this.isLoadingGps.set(false);
-    if (!this.customAreaInput) {
-      this.customAreaInput = 'Bidar, Karnataka';
-      this.detectedLocationName.set('Bidar, Karnataka');
-    }
-    this.updateMapCoordinates(this.BIDAR_KITCHEN_LAT, this.BIDAR_KITCHEN_LNG);
-  }
-
-  private async reverseGeocode(lat: number, lng: number): Promise<string> {
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 3500);
-      const res = await fetch(
-        `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=en`,
-        { signal: controller.signal }
-      );
-      clearTimeout(timeoutId);
-
-      if (res.ok) {
-        const data = await res.json();
-        const locality = data.locality || data.suburb || data.neighbourhood || '';
-        const city = data.city || data.principalSubdivision || '';
-        if (locality && city && locality !== city) {
-          return `${locality}, ${city}`;
-        }
-        return city || locality || 'Current Location';
-      }
-    } catch (e) {}
-
-    return 'Current Location';
-  }
-
-  private applyCoordinates(lat: number, lng: number): void {
     this.detectedCoords.set({ lat, lng });
-    this.platformService.userCoordinates.set({ lat, lng });
-    this.updateMapCoordinates(lat, lng);
-  }
+    this.detectedLocationName.set(shortLabel);
+    this.fullResolvedAddress.set(fullAddress);
+    this.searchInput = shortLabel;
+    this.isVerifiedPoint.set(true);
 
-  private applyResolvedLocation(name: string, lat: number, lng: number): void {
-    this.isLoadingGps.set(false);
-    this.detectedLocationName.set(name);
-    this.customAreaInput = name;
-    this.platformService.userLocationName.set(name);
+    const check = this.locationService.validateDeliveryEligibility({ lat, lng }, fullAddress);
+    this.distanceFromKitchenKm.set(check.distanceKm);
 
-    // Calculate distance from TBZB Kitchen in Bidar
-    const distance = this.calculateDistanceKm(this.BIDAR_KITCHEN_LAT, this.BIDAR_KITCHEN_LNG, lat, lng);
-    const roundedDist = Math.round(distance);
-
-    if (distance > this.MAX_DELIVERY_RADIUS_KM) {
+    if (!check.allowed) {
       this.isOutsideBidar.set(true);
-      this.outsideDistanceKm.set(roundedDist);
-      this.outsideCityName.set(name);
+      this.outsideCityName.set(shortLabel);
     } else {
       this.isOutsideBidar.set(false);
-      this.outsideDistanceKm.set(null);
       this.outsideCityName.set(null);
+    }
+
+    // Never overwrite hardware GPS with non-GPS pin; update userCoordinates display selection
+    this.platformService.userCoordinates.set({ lat, lng });
+    this.platformService.userLocationName.set(shortLabel);
+    this.platformService.userFullAddress.set(fullAddress);
+
+    if (isLiveGps) {
+      this.platformService.deviceGpsCoordinates.set({ lat, lng });
     }
   }
 
-  selectQuickChip(chip: string): void {
-    this.customAreaInput = `${chip}, Bidar`;
-    this.isOutsideBidar.set(false);
-    this.outsideDistanceKm.set(null);
-    this.outsideCityName.set(null);
-    this.platformService.userLocationName.set(this.customAreaInput);
-    this.platformService.userCoordinates.set({ lat: this.BIDAR_KITCHEN_LAT, lng: this.BIDAR_KITCHEN_LNG });
-    this.updateMapCoordinates(this.BIDAR_KITCHEN_LAT, this.BIDAR_KITCHEN_LNG);
+  onSearchInputChange(value: string): void {
+    this.searchInput = value;
+    // As soon as user manually edits text without choosing a verified result, mark unverified
+    this.isVerifiedPoint.set(false);
+
+    if (this.searchTimer) clearTimeout(this.searchTimer);
+    const trimmed = (value || '').trim();
+    if (trimmed.length < 2) {
+      this.suggestions.set([]);
+      return;
+    }
+
+    this.searchTimer = setTimeout(async () => {
+      this.isSearching.set(true);
+      const list = await this.locationService.searchAddressAutocomplete(trimmed);
+      this.suggestions.set(list);
+      this.isSearching.set(false);
+    }, 380);
   }
 
-  chooseArea(area: string): void {
-    this.customAreaInput = `${area}, Bidar`;
+  selectSuggestion(item: AddressSuggestion): void {
+    this.suggestions.set([]);
+    this.gpsErrorMsg.set(null);
+    this.setUserMapPin(item.lat, item.lng, true);
+    this.applyVerifiedPoint(item.label, item.fullAddress, item.lat, item.lng, false);
+  }
+
+  selectBidarLocality(loc: BidarLocality): void {
+    this.suggestions.set([]);
     this.showPopularAreas.set(false);
-    this.isOutsideBidar.set(false);
-    this.outsideDistanceKm.set(null);
-    this.outsideCityName.set(null);
-    this.platformService.userLocationName.set(this.customAreaInput);
-    this.platformService.userCoordinates.set({ lat: this.BIDAR_KITCHEN_LAT, lng: this.BIDAR_KITCHEN_LNG });
-    this.updateMapCoordinates(this.BIDAR_KITCHEN_LAT, this.BIDAR_KITCHEN_LNG);
+    this.gpsErrorMsg.set(null);
+    this.setUserMapPin(loc.lat, loc.lng, true);
+    this.applyVerifiedPoint(`${loc.name}, Bidar`, loc.fullAddress, loc.lat, loc.lng, false);
   }
 
-  skipToBidar(): void {
-    this.customAreaInput = 'Bidar, Karnataka';
-    this.isOutsideBidar.set(false);
-    this.outsideDistanceKm.set(null);
-    this.outsideCityName.set(null);
-    this.platformService.userCoordinates.set({ lat: this.BIDAR_KITCHEN_LAT, lng: this.BIDAR_KITCHEN_LNG });
-    this.confirmLocationAndProceed();
+  clearSearch(): void {
+    this.searchInput = '';
+    this.suggestions.set([]);
+    this.isVerifiedPoint.set(false);
   }
 
   confirmLocationAndProceed(): void {
-    const area = (this.customAreaInput || '').trim() || 'Bidar, Karnataka';
+    const coords = this.detectedCoords();
+    const label = (this.detectedLocationName() || this.searchInput || '').trim();
 
-    this.platformService.userLocationName.set(area);
-
-    const lower = area.toLowerCase();
-    const isForbidden = ['hyderabad', 'bengaluru', 'bangalore', 'mumbai', 'pune', 'delhi', 'gulbarga'].some(c => lower.includes(c));
-    if (!isForbidden) {
-      this.isOutsideBidar.set(false);
-      this.platformService.userCoordinates.set({ lat: this.BIDAR_KITCHEN_LAT, lng: this.BIDAR_KITCHEN_LNG });
+    // Prevent fake/random unverified manual text from being saved
+    if (!this.isVerifiedPoint() || !coords || !label) {
+      this.toastService.show(
+        'Please wait for GPS, select a suggestion from search, or tap on the map to verify your location.',
+        'warning',
+        'Location Not Verified'
+      );
+      return;
     }
 
-    try {
-      if (typeof localStorage !== 'undefined') {
-        localStorage.setItem('tbzb_saved_location', area);
-      }
-    } catch (e) {}
+    if (this.locationService.isForbiddenOutsideCity(label)) {
+      this.isOutsideBidar.set(true);
+      this.outsideCityName.set(label);
+    }
+
+    this.platformService.saveVerifiedLocation(
+      label,
+      this.fullResolvedAddress() || label,
+      coords
+    );
+
+    if (this.isOutsideBidar()) {
+      this.toastService.show(
+        'You can browse the menu now. Ordering is restricted to within 18 km of Bidar at checkout.',
+        'info',
+        'Outside Delivery Zone'
+      );
+    }
 
     this.isDismissing.set(true);
     setTimeout(() => {
-      this.locationConfirmed.emit(area);
+      this.locationConfirmed.emit(label);
     }, 280);
   }
 
-  private updateMapCoordinates(lat: number, lng: number): void {
-    const rawUrl = `https://maps.google.com/maps?q=${lat},${lng}&hl=en&z=15&output=embed`;
-    this.safeMapUrl.set(this.sanitizer.bypassSecurityTrustResourceUrl(rawUrl));
+  skipForBrowsingOnly(): void {
+    // Do NOT fake Bidar coordinates on skip!
+    const fallbackLabel = this.detectedLocationName() || 'Bidar (Browse Mode)';
+    this.isDismissing.set(true);
+    setTimeout(() => {
+      this.locationConfirmed.emit(fallbackLabel);
+    }, 280);
   }
 
-  ngOnDestroy(): void {}
+  ngOnDestroy(): void {
+    if (this.searchTimer) clearTimeout(this.searchTimer);
+    if (this.map) {
+      this.map.remove();
+      this.map = null;
+    }
+  }
 }

@@ -90,19 +90,24 @@ export class CustomerComponent implements OnInit {
       }
     } catch (e) {}
 
-    // Step 2: Direct Create Account screen for new users right after splash screen
+    // Step 2: Direct Create Account / Login screen for unauthenticated users right after splash screen
     if (!this.authService.isLoggedIn()) {
       this.showAuthScreen.set(true);
       this.statusBarService.setLightMode('#FFFFFF');
     } else {
+      // Immediately fetch exact live GPS location on launch for logged-in users
+      this.platformService.fetchRealLocation();
+
       let savedLoc: string | null = null;
+      let savedCoords: string | null = null;
       try {
         if (typeof localStorage !== 'undefined') {
           savedLoc = localStorage.getItem('tbzb_saved_location');
+          savedCoords = localStorage.getItem('tbzb_saved_coords');
         }
       } catch (e) {}
 
-      if (!savedLoc) {
+      if (!savedLoc || !savedCoords) {
         this.showLocationScreen.set(true);
         this.statusBarService.setLightMode('#FFFFFF');
       } else {

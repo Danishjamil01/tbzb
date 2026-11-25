@@ -7,11 +7,13 @@ export interface BusinessConfig {
     city: string;
     state: string;
     country: string;
+    address: string;
     areaNote: string;
     latitude: number;
     longitude: number;
     maxDeliveryRadiusKm: number;
     mapUrl: string;
+    geoapifyApiKey?: string;
   };
   contact: {
     phone: string;
@@ -54,11 +56,13 @@ export const BUSINESS_CONFIG: BusinessConfig = {
     city: 'Bidar',
     state: 'Karnataka',
     country: 'India',
-    areaNote: 'Serving throughout Bidar City',
-    latitude: 17.8953023,
-    longitude: 77.5022301,
-    maxDeliveryRadiusKm: 25,
-    mapUrl: 'https://www.google.com/maps/place/17%C2%B053\'43.1%22N+77%C2%B030\'08.0%22E/@17.8953023,77.5022301'
+    address: '18-3-391/2/62, Vidya Nagar, Bidar, Karnataka 585403',
+    areaNote: 'Serving throughout Bidar City (within 18 km of Vidya Nagar)',
+    latitude: 17.8953274,
+    longitude: 77.5021871,
+    maxDeliveryRadiusKm: 18,
+    mapUrl: 'https://www.google.com/maps/search/?api=1&query=17.8953274,77.5021871',
+    geoapifyApiKey: ''
   },
   contact: {
     phone: '9164346048',

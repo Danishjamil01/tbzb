@@ -19,6 +19,7 @@ export class MobileHeaderComponent implements OnInit {
   private menuService = inject(MenuService);
 
   @Output() openHoursModal = new EventEmitter<void>();
+  @Output() openLocationModal = new EventEmitter<void>();
 
   status = this.statusService.status;
   searchQuery: string = '';
@@ -34,7 +35,7 @@ export class MobileHeaderComponent implements OnInit {
   }
 
   onLocationClick(): void {
-    this.platformService.fetchRealLocation();
+    this.openLocationModal.emit();
   }
 
   onSearchChange(val: string): void {

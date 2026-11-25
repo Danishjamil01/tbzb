@@ -8,120 +8,175 @@
       </div>
       <div class="brand-text-col">
         <h2 class="brand-heading">THE BITE ZONE</h2>
-        <span class="city-sub">BIDAR • CLOUD KITCHEN</span>
+        <span class="city-sub">VIDYA NAGAR • BIDAR</span>
       </div>
     </div>
 
-    <button class="skip-btn" (click)="confirmLocationAndProceed()">Skip</button>
+    <button type="button" class="skip-btn" (click)="skipForBrowsingOnly()">Skip</button>
   </div>
 
-  <!-- Live Google Map View with Center Pin -->
+  <!-- Interactive Leaflet + OpenStreetMap View with 18km Delivery Radius Circle -->
   <div class="google-map-container">
-    @if (safeMapUrl()) {
-      <iframe
-        [src]="safeMapUrl()"
-        class="google-map-iframe"
-        title="Live Location Map"
-        loading="lazy"
-        frameborder="0"
-        scrolling="no"
-        marginheight="0"
-        marginwidth="0"
-      ></iframe>
-    }
-
-    <!-- Radar Pulse & Pin Anchored Over Center -->
-    <div class="map-center-overlay" aria-hidden="true">
-      <div class="radar-scan-ring" [class.active]="isLoadingGps()"></div>
-      <div class="center-pin-badge">
-        <app-icon name="map-pin" [size]="28" extraClass="pin-icon" />
-      </div>
-    </div>
+    <div #leafletMap class="leaflet-map-host" aria-label="Interactive Delivery Map"></div>
 
     <!-- Floating Satellite GPS Status Badge -->
-    <div class="floating-gps-badge" [class.locked]="!isLoadingGps()">
+    <div class="floating-gps-badge" [class.locked]="!isLoadingGps() && isVerifiedPoint() && !isOutsideBidar()" [class.outside]="!isLoadingGps() && isOutsideBidar()">
       <span class="satellite-dot" [class.pulse]="isLoadingGps()"></span>
       <span class="badge-text">
-        {{ isLoadingGps() ? 'Detecting Your Real Live Location...' : '🛰️ Live Location Locked' }}
+        @if (isLoadingGps()) {
+          Detecting Exact GPS Location...
+        } @else if (gpsErrorMsg()) {
+          GPS Signal Needed • Tap Re-check GPS
+        } @else if (isOutsideBidar()) {
+          Outside Bidar ({{ distanceFromKitchenKm() }} km away)
+        } @else if (isVerifiedPoint()) {
+          Verified in Bidar ({{ distanceFromKitchenKm() }} km)
+        } @else {
+          Tap Map or Select Address
+        }
       </span>
+    </div>
+
+    <!-- Map Hint Chip -->
+    <div class="map-drag-hint">
+      <span>Drag red pin or tap map to adjust spot</span>
     </div>
   </div>
 
-  <!-- Location Verification & Editable Area Section -->
+  <!-- Location Verification & Autocomplete Search Section -->
   <div class="location-details-section">
-    <!-- Informative Notice if User is outside Bidar (e.g. Hyderabad, Bengaluru) -->
+    <!-- GPS Error / Permission Alert -->
+    @if (gpsErrorMsg()) {
+      <div class="outside-bidar-banner gps-alert-banner">
+        <div class="banner-icon-col">
+          <app-icon name="alert-circle" [size]="20" />
+        </div>
+        <div class="banner-text-col">
+          <strong>GPS Permission / Signal Needed</strong>
+          <p>{{ gpsErrorMsg() }}</p>
+        </div>
+      </div>
+    }
+
+    <!-- Warning Banner if Outside Bidar Delivery Radius (> 18 km) -->
     @if (isOutsideBidar()) {
       <div class="outside-bidar-banner">
         <div class="banner-icon-col">
           <app-icon name="info" [size]="20" />
         </div>
         <div class="banner-text-col">
-          <strong>Location: {{ outsideCityName() }} ({{ outsideDistanceKm() }} km from Bidar)</strong>
-          <p>You can explore the full food menu now! Note: Food delivery orders are fulfilled within Bidar city limits at checkout.</p>
+          <strong>{{ outsideCityName() }} ({{ distanceFromKitchenKm() }} km from Vidya Nagar Kitchen)</strong>
+          <p>You can browse our menu now! Note: Delivery orders are strictly locked to within {{ config.maxDeliveryRadiusKm }} km of Bidar city at checkout.</p>
         </div>
       </div>
     }
 
-    <!-- Editable Location Input Card -->
+    <!-- Autocomplete Location Search Card -->
     <div class="location-input-card">
       <div class="card-title-row">
-        <span class="label-text">YOUR CURRENT LOCATION / ADDRESS</span>
-        <button class="btn-detect-again" (click)="detectLiveLocation()" [disabled]="isLoadingGps()">
+        <span class="label-text">VERIFIED DELIVERY LOCATION</span>
+        <button type="button" class="btn-detect-again" (click)="detectLiveLocation()" [disabled]="isLoadingGps()">
           <app-icon name="refresh-cw" [size]="13" [extraClass]="isLoadingGps() ? 'spin' : ''" />
-          <span>{{ isLoadingGps() ? 'Detecting...' : 'Re-check GPS' }}</span>
+          <span>{{ isLoadingGps() ? 'Detecting...' : 'Use Live GPS' }}</span>
         </button>
       </div>
 
-      <!-- Editable Area Input Field -->
-      <div class="input-field-wrapper">
-        <app-icon name="map-pin" [size]="18" extraClass="pin-field-icon" />
-        <input
-          type="text"
-          [(ngModel)]="customAreaInput"
-          placeholder="Detecting your location..."
-          class="area-text-input"
-          autocomplete="off"
-        />
-        @if (customAreaInput) {
-          <button class="btn-clear-input" (click)="customAreaInput = ''">
-            <app-icon name="x" [size]="15" />
-          </button>
+      <!-- Autocomplete Input Field -->
+      <div class="search-autocomplete-wrap">
+        <div class="input-field-wrapper" [class.verified-border]="isVerifiedPoint() && !isOutsideBidar()" [class.unverified-border]="searchInput.length > 0 && !isVerifiedPoint()">
+          <app-icon name="search" [size]="17" extraClass="pin-field-icon" />
+          <input
+            type="text"
+            [ngModel]="searchInput"
+            (ngModelChange)="onSearchInputChange($event)"
+            placeholder="Search Bidar area or tap Use Live GPS..."
+            class="area-text-input"
+            autocomplete="off"
+          />
+          @if (isSearching()) {
+            <span class="search-spinner"></span>
+          } @else if (searchInput) {
+            <button type="button" class="btn-clear-input" (click)="clearSearch()" aria-label="Clear search">
+              <app-icon name="x" [size]="15" />
+            </button>
+          }
+        </div>
+
+        <!-- Validation Hint if User Typed Unverified Text -->
+        @if (searchInput.length > 1 && !isVerifiedPoint() && !isLoadingGps()) {
+          <span class="verify-hint-warn">
+            Tap a suggested place below, drop pin on map, or tap "Use Live GPS" (manual invalid text is blocked).
+          </span>
+        }
+
+        <!-- Full Address Subtext -->
+        @if (isVerifiedPoint() && fullResolvedAddress()) {
+          <div class="full-resolved-address">
+            <app-icon name="map-pin" [size]="13" />
+            <span>{{ fullResolvedAddress() }}</span>
+          </div>
+        }
+
+        <!-- Autocomplete Suggestions Dropdown -->
+        @if (suggestions().length > 0) {
+          <div class="autocomplete-dropdown">
+            @for (item of suggestions(); track item.label + item.lat) {
+              <button type="button" class="suggestion-row" (click)="selectSuggestion(item)">
+                <div class="sug-icon">
+                  <app-icon name="map-pin" [size]="15" />
+                </div>
+                <div class="sug-text">
+                  <strong>{{ item.label }}</strong>
+                  <span>{{ item.fullAddress }}</span>
+                </div>
+                <span class="sug-dist" [class.out]="!item.withinDeliveryZone">
+                  {{ item.distanceKm }} km
+                </span>
+              </button>
+            }
+          </div>
         }
       </div>
 
-      <!-- Quick Bidar Locality Chips (Fast 1-tap selection if ordering in Bidar) -->
+      <!-- Quick Verified Bidar Locality Chips -->
       <div class="quick-chips-strip">
-        <span class="chips-label">Bidar Delivery Areas (Tap to pick):</span>
+        <span class="chips-label">Verified Bidar Zones:</span>
         <div class="chips-scroll-row">
-          @for (chip of quickChips; track chip) {
+          @for (chip of quickChips; track chip.name) {
             <button
               type="button"
               class="quick-pill-btn"
-              [class.active]="customAreaInput.includes(chip)"
-              (click)="selectQuickChip(chip)"
+              [class.active]="detectedLocationName()?.includes(chip.name)"
+              (click)="selectBidarLocality(chip)"
             >
-              {{ chip }}
+              {{ chip.name }}
             </button>
           }
           <button type="button" class="quick-pill-btn btn-more" (click)="showPopularAreas.set(true)">
-            + All 13 Areas
+            + All {{ bidarLocalities.length }} Areas
           </button>
         </div>
       </div>
     </div>
 
-    <!-- Confirm Button (Explicit User Tap Only - No Auto-Redirect!) -->
+    <!-- Confirm Button -->
     <div class="actions-group">
       <button
         type="button"
         class="btn-confirm-location"
         (click)="confirmLocationAndProceed()"
-        [disabled]="isLoadingGps()"
+        [disabled]="isLoadingGps() || !isVerifiedPoint()"
       >
-        <span>Confirm Location & Open Menu</span>
+        @if (isOutsideBidar()) {
+          <span>Continue to Browse Menu (Outside Delivery Zone)</span>
+        } @else {
+          <span>Confirm Location & Open Menu</span>
+        }
         <app-icon name="arrow-right" [size]="18" />
       </button>
-      <p class="satisfaction-hint">Tap above to confirm your location and start browsing dishes.</p>
+      <p class="satisfaction-hint">
+        Kitchen Reference: 18-3-391/2/62, Vidya Nagar, Bidar • Max Radius {{ config.maxDeliveryRadiusKm }} km
+      </p>
     </div>
   </div>
 
@@ -132,20 +187,20 @@
       <div class="drawer-header">
         <div class="drawer-header-left">
           <app-icon name="map-pin" [size]="18" />
-          <h3 class="drawer-title">Select Bidar Delivery Area</h3>
+          <h3 class="drawer-title">Select Verified Bidar Locality</h3>
         </div>
-        <button class="drawer-close-btn" (click)="showPopularAreas.set(false)" aria-label="Close">
+        <button type="button" class="drawer-close-btn" (click)="showPopularAreas.set(false)" aria-label="Close">
           <app-icon name="x" [size]="18" />
         </button>
       </div>
       <div class="areas-list-scroll">
-        @for (area of bidarAreas; track area) {
-          <button class="area-item-row" (click)="chooseArea(area)">
+        @for (area of bidarLocalities; track area.name) {
+          <button type="button" class="area-item-row" (click)="selectBidarLocality(area)">
             <div class="area-item-left">
               <span class="area-pin-dot"></span>
-              <span class="area-name">{{ area }}</span>
+              <span class="area-name">{{ area.name }}</span>
             </div>
-            <span class="area-tag">Bidar • 20 Mins</span>
+            <span class="area-tag">Bidar • Verified</span>
           </button>
         }
       </div>
